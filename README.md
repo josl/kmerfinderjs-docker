@@ -5,8 +5,15 @@
 
 ## Usage
 
+To create the compiled front-end :
+```bash
+grunt build
+```
 
-# http://stackoverflow.com/questions/33475505/mongodb-mongoimport-loses-connection-when-importing-big-files
+
+# Innit DB
+
+http://stackoverflow.com/questions/33475505/mongodb-mongoimport-loses-connection-when-importing-big-files
 Innitialize MongoDB assuming that we have mounted a folder on the host machine mapped to /kmer-database in the container with a file named myDB.json
 
 docker exec <CONTAINER_NAME> mongoimport --host 0.0.0.0:27017 -j 16 -d Kmers -c genomes --file /kmer-database/myDB.json --jsonArray --batchSize=100
