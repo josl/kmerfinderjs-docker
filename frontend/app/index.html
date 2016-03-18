@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+    <!-- build:css(.) styles/vendor.css -->
+    <!-- bower:css -->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="bower_components/angular-ui-grid/ui-grid.min.css" />
+    <link rel="stylesheet" href="bower_components/bootstrap-material-design/dist/css/material-fullpalette.css" />
+    <link rel="stylesheet" href="bower_components/bootstrap-material-design/dist/css/ripples.css" />
+    <!-- endbower -->
+    <!-- endbuild -->
+    <!-- build:css(.tmp) styles/main.css -->
+    <link rel="stylesheet" href="styles/main.css">
+    <!-- endbuild -->
+  </head>
+  <body ng-app="cgeUploaderApp">
+    <!--[if lte IE 8]>
+      <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    <![endif]-->
+
+    <div class="container">
+        <div ng-view=""></div>
+        <div id="footer" class="well text-center well-sm">
+            <h6 class="container row">
+                <p class="text-centered col-xs-6">
+                    <i class="glyphicon glyphicon-copyright-mark"></i>
+                    Copyright DTU 2015 / All rights reserved
+                </p>
+                <p class="text-centered col-xs-6" role="button" data-toggle="modal" data-target="#browser-dialog">
+                    Browser support
+                    <i class="mdi-hardware-desktop-mac"></i>
+                    <i class="mdi-hardware-laptop-mac"></i>
+                    <i class="mdi-hardware-phone-iphone"></i>
+                    <i class="mdi-hardware-tablet-mac"></i>
+                </p>
+            </h6>
+        </div>
+        <div id="browser-dialog" class="modal fade" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">X</button>
+              </div>
+              <div class="modal-body">
+                <img src="images/browsers.png"></img>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+
+
+    <!-- <footer class="footer">
+      <div class="container">
+        <p class="text-center">Browser compatibility</p>
+      </div>
+    </footer> -->
+
+
+    <!-- Google Analytics: change UA-XXXXX-X to be your site's ID -->
+     <script>
+       !function(A,n,g,u,l,a,r){A.GoogleAnalyticsObject=l,A[l]=A[l]||function(){
+       (A[l].q=A[l].q||[]).push(arguments)},A[l].l=+new Date,a=n.createElement(g),
+       r=n.getElementsByTagName(g)[0],a.src=u,r.parentNode.insertBefore(a,r)
+       }(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+       ga('create', 'UA-XXXXX-X');
+       ga('send', 'pageview');
+    </script>
+
+    <!-- build:js(.) scripts/vendor.js -->
+    <!-- bower:js -->
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="bower_components/angular-animate/angular-animate.js"></script>
+    <script src="bower_components/angular-cookies/angular-cookies.js"></script>
+    <script src="bower_components/angular-messages/angular-messages.js"></script>
+    <script src="bower_components/angular-resource/angular-resource.js"></script>
+    <script src="bower_components/angular-route/angular-route.js"></script>
+    <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
+    <script src="bower_components/angular-touch/angular-touch.js"></script>
+    <script src="bower_components/ng-file-upload/ng-file-upload.min.js"></script>
+    <script src="bower_components/ng-file-upload/FileAPI.min.js"></script>
+    <script src="bower_components/ng-file-upload-shim/ng-file-upload-shim.js"></script>
+    <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
+    <script src="bower_components/js-xlsx/dist/xlsx.core.min.js"></script>
+    <script src="bower_components/js-xlsx/dist/jszip.js"></script>
+    <script src="bower_components/underscore/underscore.js"></script>
+    <script src="bower_components/angular-ui-grid/ui-grid.min.js"></script>
+    <script src="bower_components/bootstrap-material-design/dist/js/material.js"></script>
+    <script src="bower_components/bootstrap-material-design/dist/js/ripples.js"></script>
+    <script src="bower_components/moment/moment.js"></script>
+    <script src="bower_components/SparkMD5/spark-md5.js"></script>
+    <script src="bower_components/jsSHA/src/sha.js"></script>
+    <!-- endbower -->
+    <!-- endbuild -->
+    <script src="scripts/kmers.js"></script>
+    <script src="scripts/kmerFinderClient.js"></script>
+    <script src="scripts/stats.js"></script>
+    <script src="scripts/config.js"></script>
+    <!-- build:js({.tmp,app}) scripts/scripts.js -->
+    <script src="scripts/app.js"></script>
+    <script src="scripts/controllers/kmerfinder.js"></script>
+    <script src="scripts/directives/dropfilesbutton.js"></script>
+    <!-- endbuild -->
+</body>
+</html>
