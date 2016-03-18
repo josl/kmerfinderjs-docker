@@ -1,0 +1,34 @@
+<div ng-controller="KmerFinderCtrl">
+    <div class="jumbotron">
+        <h1 class="text-center">
+            <span style="color: #3f51b5;">KmerFinder</span>
+            <span style="color: #ff5722;">JS</span>
+        </h1>
+        <!-- <p>...</p>
+        <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p> -->
+    </div>
+    <drop-files-button active="true" is-service="true"></drop-files-button>
+    <div ng-show="isolateFiles.length !== 0" class="well well-lg">
+        <p class="text-center">
+            <button id="submitButton" ng-click="analize()" type="button" class="btn btn-material-indigo-500 btn-lg btn-block">
+                Predict Species
+            </button>
+        </p>
+        <div ng-repeat="f in isolateFiles">
+            <h3 ng-show="f.match" class="text-center">Congrats! You got a
+                <span style="color: #ff5722">{{f.species}}</span>
+            </h3>
+            <div ng-show="f.match" ui-grid="f.matchesGrid" class="myGrid" ui-grid-auto-resize></div>
+            <!-- <uib-accordion>
+                <uib-accordion-group is-open="f.status">
+                    <uib-accordion-heading>
+                        I can have markup, too!
+                        <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': f.status.open, 'glyphicon-chevron-right': !f.status.open}"></i>
+                    </uib-accordion-heading>
+                    This is just some content to illustrate fancy headings.
+                </uib-accordion-group>
+            </uib-accordion> -->
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,23 @@
+angular:
+  image: httpd:latest
+  ports:
+    - "9999:80"
+  links:
+    - node
+  volumes:
+    - ./frontend/dist:/usr/local/apache2/htdocs/
+node:
+    build: .
+    command: "node server.js"
+    ports:
+        - "5000:80"
+    links:
+        - mongo
+    environment:
+        PORT: 27017
+mongo:
+    image: mongo:latest
+    volumes:
+        - ./database:/kmer-database
+        - ./scripts:/src
+        - /data/docker:/data/db

@@ -1,0 +1,14 @@
+web:
+  build: .
+  ports:
+   - "5000:80"
+  volumes:
+   - .:/code
+  links:
+   - mongo
+mongo:
+  image: mongo:latest
+  volumes:
+      - /home/data2/databases/kmer_databases/current:/kmer-database
+      - ./scripts:/src
+      - /home/data2/databases/mongo:/data/db
