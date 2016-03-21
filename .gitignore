@@ -5,5 +5,5 @@ test_data/db.json
 test_data/mongoDB.json
 uploader
 database/*
-frontend/.tmp/*
-frontend/app/scripts/config.js
+/frontend/.tmp/*
+/frontend/app/scripts/config.js
