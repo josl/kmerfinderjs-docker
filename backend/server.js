@@ -16,8 +16,8 @@ app.use(function (req, res, next) {
 var textParser = bodyParser.raw();
 var kmerFinder = new kmerFinderModule.KmerFinderServer(
     '', 'ATGAC', 16, 1, 1, '', 'mongo',
-    'mongodb://mongo:'+ process.env.PORT + '/Kmers');
-    
+    'mongodb://mongo:' + process.env.PORT + '/Kmers');
+
 app.get('/', function (req, res) {
     res.send('Hello World!');
 });
@@ -29,37 +29,43 @@ app.post('/kmers', textParser, function (req, res) {
     req.setEncoding('utf8');
     var kmers = '';
     req.on('data', function (chunk) {
-        kmers += chunk.toString();
-    })
-    .on('end', function () {
-        // console.log(kmerFinder, kmers);
-        kmerFinder.findMatches(kmerJS.stringToMap(kmers)).then(function (matches) {
-            console.log(matches.length);
+            kmers += chunk.toString();
+        })
+        .on('end', function () {
             var jsonMatches = [];
-            matches.forEach(function (match) {
-                jsonMatches.push({
-                    template: match.get('template'),
-                    score: match.get('score'),
-                    expected: match.get('expected'),
-                    z: match.get('z'),
-                    probability: match.get('probability'),
-                    'frac-q': match.get('frac-q'),
-                    'frac-d': match.get('frac-d'),
-                    coverage: match.get('coverage'),
-                    ulength: match.get('ulength'),
-                    species: match.get('species')
+            kmerFinder.findMatches(kmerJS.stringToMap(kmers))
+                .then(function (matches) {
+                    console.log('Matches found: ', matches.length);
+                    matches.forEach(function (match) {
+                        jsonMatches.push({
+                            template: match.get('template'),
+                            score: match.get('score'),
+                            expected: match.get('expected'),
+                            z: match.get('z'),
+                            probability: match.get('probability'),
+                            'frac-q': match.get('frac-q'),
+                            'frac-d': match.get('frac-d'),
+                            coverage: match.get('coverage'),
+                            ulength: match.get('ulength'),
+                            species: match.get('species')
+                        });
+                    });
+                    res.json(jsonMatches);
+                }, function (err) {
+                    // FIXME: Don't intercept error in the module... do it here!
+                    console.log('Error on the server...');
+                    res.json(jsonMatches);
                 });
-            });
-            res.json(jsonMatches);
-        });
 
-    });
+        });
 });
 
 
 var server = app.listen(80, function () {
-    var host = server.address().address;
-    var port = server.address().port;
+    var host = server.address()
+        .address;
+    var port = server.address()
+        .port;
 
     Console.log('Example app listening at http://%s:%s', host, port);
 });
