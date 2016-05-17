@@ -1,5 +1,5 @@
 var express = require('express');
-var kmerFinderModule = require('./kmerjs/kmerFinderServer.js');
+var kmerFinder = require('./kmerjs/kmerFinderServer.js');
 var kmerJS = require('./kmerjs/kmers.js');
 var Console = require('console');
 var bodyParser = require('body-parser');
@@ -14,9 +14,7 @@ app.use(function (req, res, next) {
 
 // create application/json parser
 var textParser = bodyParser.raw();
-var kmerFinder = new kmerFinderModule.KmerFinderServer(
-    '', 'ATGAC', 16, 1, 1, '', 'mongo',
-    'mongodb://mongo:' + process.env.PORT + '/Kmers');
+
 
 app.get('/', function (req, res) {
     res.send('Hello World!');
@@ -26,6 +24,9 @@ app.post('/kmers', textParser, function (req, res) {
     if (!req.body) {
         return res.sendStatus(400);
     }
+    console.log('new request!', req.body);
+    var collection = 'complete_genomes_4';
+    var dbName = 'Kmers';
     req.setEncoding('utf8');
     var kmers = '';
     req.on('data', function (chunk) {
@@ -33,8 +34,21 @@ app.post('/kmers', textParser, function (req, res) {
         })
         .on('end', function () {
             var jsonMatches = [];
-            kmerFinder.findMatches(kmerJS.stringToMap(kmers))
+            var query = kmerJS.stringToMap(kmers);
+            console.log(query.get('db'), query.get('collection'));
+            var kmerObj = new kmerFinder.KmerFinderServer(
+                '',
+                'ATGAC', 16, 1, 1, true, 'mongo',
+                'mongodb://mongo:' + process.env.PORT + query.get('db'),
+                query.get('db'), 'winner'
+            );
+            console.log(query.size);
+            query.delete('db');
+            query.delete('collection');
+            console.log(query.size);
+            kmerObj.findMatches(query)
                 .then(function (matches) {
+                    kmerObj.close();
                     console.log('Matches found: ', matches.length);
                     matches.forEach(function (match) {
                         jsonMatches.push({
@@ -51,10 +65,11 @@ app.post('/kmers', textParser, function (req, res) {
                         });
                     });
                     res.json(jsonMatches);
-                }, function (err) {
-                    // FIXME: Don't intercept error in the module... do it here!
-                    console.log('Error on the server...');
-                    res.json(jsonMatches);
+                })
+                .catch(function (err) {
+                    kmerObj.close();
+                    console.log('Server: ', err.message);
+                    res.status(404).send(err.message);
                 });
 
         });

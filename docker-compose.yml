@@ -1,5 +1,5 @@
 angular:
-  image: httpd:latest
+  image: httpd
   ports:
     - "9999:80"
   links:
@@ -8,13 +8,15 @@ angular:
     - ./frontend/dist:/usr/local/apache2/htdocs/
 node:
     build: .
-    command: "node server.js"
+    command: "npm start"
     ports:
         - "5000:80"
     links:
         - mongo
     environment:
         PORT: 27017
+    # volumes:
+    #     - ./backend:/usr/src/app
 mongo:
     image: mongo:latest
     volumes:

@@ -14,6 +14,11 @@
                 Predict Species
             </button>
         </p>
+        <div class="alert alert-danger text-center" role="alert" ng-show="error">
+            <h3>
+                {{errorMessage}}
+            </h3>
+        </div>
         <div ng-repeat="f in isolateFiles">
             <h3 ng-show="f.match" class="text-center">Congrats! You got a
                 <span style="color: #ff5722">{{f.species}}</span>
