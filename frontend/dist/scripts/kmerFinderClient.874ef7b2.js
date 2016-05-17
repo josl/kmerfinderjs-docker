@@ -45,15 +45,15 @@ var _createClass = (function () {
     };
 })();
 
-var _get = function get(_x9, _x10, _x11) {
+var _get = function get(_x11, _x12, _x13) {
     var _again = true;_function: while (_again) {
-        var object = _x9,
-            property = _x10,
-            receiver = _x11;_again = false;if (object === null) object = Function.prototype;var desc = Object.getOwnPropertyDescriptor(object, property);if (desc === undefined) {
+        var object = _x11,
+            property = _x12,
+            receiver = _x13;_again = false;if (object === null) object = Function.prototype;var desc = Object.getOwnPropertyDescriptor(object, property);if (desc === undefined) {
             var parent = Object.getPrototypeOf(object);if (parent === null) {
                 return undefined;
             } else {
-                _x9 = parent;_x10 = property;_x11 = receiver;_again = true;desc = parent = undefined;continue _function;
+                _x11 = parent;_x12 = property;_x13 = receiver;_again = true;desc = parent = undefined;continue _function;
             }
         } else if ('value' in desc) {
             return desc.value;
@@ -104,76 +104,6 @@ var _from22 = _interopRequireDefault(_from2);
 var _kmersJs = require('./kmers.js');
 
 var _stats = require('./stats');
-
-// let dbs = new Map([
-//     ['mongo', 'mongodb://localhost:27017/Kmers'],
-//     ['json', '../test_data/db.json']
-// ]);
-
-// function readLinesBrowser(kmerObj, readerStream) {
-//     Console.log(kmerObj.fastq);
-//     return new Promise(function (resolve) {
-//         // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
-//         let liner = new stream.Transform({ objectMode: true });
-//         Console.log(liner);
-//         liner._transform = function (chunk, encoding, done) {
-//             let data = chunk.toString();
-//             if (this._lastLineData) {
-//                 data = this._lastLineData + data;
-//             }
-//
-//             let lines = data.split('\n');
-//             this._lastLineData = lines.splice(lines.length - 1, 1)[0];
-//
-//             lines.forEach(this.push.bind(this));
-//             done();
-//         };
-//         liner._flush = function (done) {
-//             if (this._lastLineData) {
-//                 this.push(this._lastLineData);
-//             }
-//             this._lastLineData = null;
-//             done();
-//         };
-//         Console.log('LALALALALA');
-//         readerStream(kmerObj.fastq).pipe(liner);
-//         Console.log('LOLOLOLOLO');
-//         let i = 0;
-//         let lines = 0;
-//         liner.on('readable', function () {
-//             let line;
-//             Console.log(line);
-//             while (null !== (line = liner.read())) {
-//                 if (i === 1 && line.length > 1) {
-//                     kmerObj.kmersInLine(line, kmerObj.kmerMap, kmerObj.length,
-//                                  kmerObj.preffix, kmerObj.step);
-//                     kmerObj.kmersInLine(complement(line), kmerObj.kmerMap,
-//                                  kmerObj.length, kmerObj.preffix, kmerObj.step);
-//                     process.stdout.write(`Lines: ${lines} /
-//                                           Kmers: ${kmerObj.kmerMap.size}\r`);
-//                 } else if (i === 3) {
-//                     i = -1;
-//                 } else if (i === 2) {
-//                     if (line !== '+') {
-//                         Console.log('ERROR!');
-//                     }
-//                 } else if (i === 0) {
-//                     if (line[0] !== '@') {
-//                         Console.log('ERROR2!');
-//                     }
-//                 }
-//                 i += 1;
-//                 lines += 1;
-//
-//             }
-//         });
-//         Console.log('LELELELELELLE');
-//         liner.on('end', function () {
-//             process.stdout.write(`\n`);
-//             resolve(kmerObj.kmerMap);
-//         });
-//     });
-// }
 
 // FIXME: BROWSER DATABASE NEEDS TO BE FIXED!!!!
 function computeStats(results, query) {
@@ -332,39 +262,60 @@ var KmerFinderClient = (function (_KmerJS) {
         var step = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
         var coverage = arguments.length <= 5 || arguments[5] === undefined ? 1 : arguments[5];
         var out = arguments.length <= 6 || arguments[6] === undefined ? '' : arguments[6];
-        var db = arguments.length <= 7 || arguments[7] === undefined ? 'mongo' : arguments[7];
+        var db = arguments.length <= 7 || arguments[7] === undefined ? 'server' : arguments[7];
         var url = arguments.length <= 8 || arguments[8] === undefined ? 'http://localhost:3000/kmers' : arguments[8];
         var summary = arguments.length <= 9 || arguments[9] === undefined ? '/Users/cisneror/code/genomic-git/kmerjs/test_data/summary.json' : arguments[9];
+        var collection = arguments.length <= 10 || arguments[10] === undefined ? 'genomes' : arguments[10];
+        var dbName = arguments.length <= 11 || arguments[11] === undefined ? 'Kmers' : arguments[11];
 
         _classCallCheck(this, KmerFinderClient);
 
-        _get(Object.getPrototypeOf(KmerFinderClient.prototype), 'constructor', this).call(this, preffix, length, step, coverage, out, env);
-        this.fastq = fastq;
-        this.db = {
-            type: db,
-            url: url,
-            summary: summary
-        };
+        _get(Object.getPrototypeOf(KmerFinderClient.prototype), 'constructor', this).call(this, fastq, preffix, length, step, coverage, out, env);
+        this.dbLocation = db;
+        this.dbURL = url;
+        this.collection = collection;
+        this.dbName = dbName;
     }
 
     _createClass(KmerFinderClient, [{
         key: 'findKmers',
         value: function findKmers() {
-            return this.readLines();
+            console.log(this);
+            return this.readFile();
         }
     }, {
         key: 'findMatches',
         value: function findMatches(kmerQuery) {
+            console.log(this);
             var that = this;
             return new Promise(function (resolve, reject) {
-                if (that.db.type === 'json') {
+                if (that.dbLocation === 'client') {
                     resolve(findMatchesJSON(kmerQuery, that));
-                } else if (that.db.type === 'mongo') {
-                    fromString(JSON.stringify((0, _kmersJs.mapToJSON)(kmerQuery))).pipe((0, _request2['default'])({ url: that.db.url, method: 'POST' }).on('response', function (response) {
-                        resolve(response);
-                    }).on('error', function (err) {
-                        reject(err);
-                    }));
+                } else if (that.dbLocation === 'server') {
+                    var formData = {
+                        db: that.dbName,
+                        collection: that.collection
+                    };
+                    console.log(formData);
+                    kmerQuery.set('db', that.dbName);
+                    kmerQuery.set('collection', that.collection);
+                    fromString(JSON.stringify((0, _kmersJs.mapToJSON)(kmerQuery))).pipe(_request2['default'].post(that.dbURL, function (err, response, body) {
+                        console.log(err, body);
+                        if (response.statusCode === 201 || response.statusCode === 200 || response.statusCode === 202) {
+                            console.log('resolving!');
+                            resolve(response);
+                        } else {
+                            console.log('we get an error!', err);
+                            reject(body);
+                        }
+                    })
+                    // .form(formData)
+                    // .on('response', function (response) {
+                    //     console.log(response);
+                    //     resolve(response);
+                    // })
+
+                    );
                 }
             });
         }
@@ -375,10 +326,14 @@ var KmerFinderClient = (function (_KmerJS) {
 
 exports.KmerFinderClient = KmerFinderClient;
 
+// .on('error', function (err) {
+//     console.log('we get an error!', err);
+//     reject(err);
+// })
+
 },{"./kmers.js":2,"./stats":3,"bignumber.js":7,"console":196,"from2":20,"request":60}],2:[function(require,module,exports){
 (function (process){
 /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
-// let fs = require('browserify-fs');
 
 'use strict';
 
@@ -539,40 +494,47 @@ function mapToJSON(strMap) {
     }
 
     return obj;
-    // return JSON.stringify(obj);
 }
 
 var KmerJS = (function () {
+    /**
+     * [constructor description]
+     * @param  {[type]} preffix  =             'ATGAC' [Filter kmers starting with]
+     * @param  {[type]} length   =             16      [Lenght of kmer: 16-mer]
+     * @param  {[type]} step     =             1       [Overlapping kmers of step STEP]
+     * @param  {[type]} coverage =             1       [minimun coverage]
+     * @param  {[type]} out      =             ''      [description]
+     * @param  {[type]} env      =             'node'  [description]
+     * @return {[type]}          [description]
+     */
+
     function KmerJS() {
-        var preffix = arguments.length <= 0 || arguments[0] === undefined ? 'ATGAC' : arguments[0];
-        var length = arguments.length <= 1 || arguments[1] === undefined ? 16 : arguments[1];
-        var step = arguments.length <= 2 || arguments[2] === undefined ? 1 : arguments[2];
-        var coverage = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
-        var out = arguments.length <= 4 || arguments[4] === undefined ? '' : arguments[4];
-        var env = arguments.length <= 5 || arguments[5] === undefined ? 'node' : arguments[5];
+        var fastq = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+        var preffix = arguments.length <= 1 || arguments[1] === undefined ? 'ATGAC' : arguments[1];
+        var length = arguments.length <= 2 || arguments[2] === undefined ? 16 : arguments[2];
+        var step = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
+        var coverage = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
+        var progress = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+        var env = arguments.length <= 6 || arguments[6] === undefined ? 'node' : arguments[6];
 
         _classCallCheck(this, KmerJS);
 
+        this.fastq = fastq;
         this.preffix = preffix;
         this.length = length;
         this.step = step;
-        this.out = out === '' ? undefined : out;
+        this.progress = progress;
         this.coverage = coverage;
         this.uKmers = 0;
-        // this.evalue = evalue || new BN(0.05);
         this.evalue = new _bignumberJs2['default'](0.05);
-        this.kmerMap = new Map();
+        this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
         this.env = env;
     }
 
     /**
-     * [findKmers description]
+     * [kmersInLine description]
      * @param  {[string]} line [Sequence read: ATGACCTGAGAGCCTT]
-     * @param  {[Map]} kmerMap [Kmers as keys and number of times seen as value]
-     * @param  {[integer]} length  [Lenght of kmer: 16-mer]
-     * @param  {[string]} preffix [Sequence to downsample the map: ATGAC]
-     * @param  {[integer]} step    [Overlapping kmers of step]
-     * @return {[true]}         [description]
+     * @return {[type]}      [description]
      */
 
     _createClass(KmerJS, [{
@@ -584,16 +546,20 @@ var KmerJS = (function () {
             for (var index = 0; index < stop; index += 1) {
                 var key = line.substring(ini, end);
                 if (key.startsWith(this.preffix)) {
-                    var count = this.kmerMap.get(key) || 0;
-                    this.kmerMap.set(key, count + 1);
+                    this.kmerMap.set(key, (this.kmerMap.get(key) || 0) + 1);
                 }
                 ini += this.step;
                 end = ini + this.length;
             }
         }
+
+        /**
+         * [readFile extract Kmers from file.]
+         * @return {[type]} [description]
+         */
     }, {
-        key: 'readLines',
-        value: function readLines() {
+        key: 'readFile',
+        value: function readFile() {
             var kmerObj = this;
             return new Promise(function (resolve) {
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
@@ -628,31 +594,29 @@ var KmerJS = (function () {
                     var line = undefined;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
-                            kmerObj.kmersInLine(line, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
-                            kmerObj.kmersInLine(complement(line), kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
+                            [line, complement(line)].forEach(function (line) {
+                                kmerObj.kmersInLine(line, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
+                            });
                             var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMap.size + '\r';
-                            if (kmerObj.env === 'node' && kmerObj.out !== undefined) {
+                            if (kmerObj.env === 'node' && kmerObj.progress) {
                                 process.stdout.write(progress);
                             } else if (kmerObj.env === 'browser') {
                                 // Console.log(progress);
                             }
                         } else if (i === 3) {
                                 i = -1;
-                            } //else if (i === 2) {
-                        //     if (line !== '+') {
-                        //         Console.log('ERROR!');
-                        //     }
-                        // } else if (i === 0) {
-                        //     if (line[0] !== '@') {
-                        //         Console.log('ERROR2!');
-                        //     }
-                        // }
+                            }
                         i += 1;
                         lines += 1;
                     }
                 });
 
                 liner.on('end', function () {
+                    // Clean up progress output
+                    if (kmerObj.env === 'node' && kmerObj.progress) {
+                        process.stdout.write('\r                               \n');
+                    }
+                    kmerObj.uKmers = kmerObj.kmerMap.size;
                     resolve(kmerObj.kmerMap);
                 });
             });
