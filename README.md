@@ -42,5 +42,36 @@ Finally we need to include the Summary collection to the DB
 docker exec <CONTAINER_NAME> mongoimport --host 0.0.0.0:27017 -j 16 -d Kmers -c Summary --file /kmer-database/summary.json --jsonArray --batchSize=100
 ```
 
+Useful commands
+======================
+```bash
+# Go to Docker repository
+cd /your/path/to/cge-tools-docker
+
+# Update Docker repository
+git stash;git pull
+
+# Go to master git branch
+git stash;git checkout master
+
+# Shutdown Docker deamon
+docker-machine stop default
+
+# Start Docker deamon
+docker-machine start default
+
+# Reset Docker env (Used to run docker containers from different terminals)
+eval "$(docker-machine env default)"
+
+# Build cgetools Docker image
+docker build -t cgetools .
+
+# Docker Cleanup
+# Stop and remove all containers (instances of images)
+docker rm $(docker stop $(docker ps -aq))
+# Remove all dangling images
+docker rmi $(docker images -qf "dangling=true")
+```
+
 ## License
 Apache-2.0 © [Jose Luis Bellod Cisneros](http://josl.github.io)

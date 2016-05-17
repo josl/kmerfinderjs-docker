@@ -1,5 +1,4 @@
 /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
-// let fs = require('browserify-fs');
 
 'use strict';
 
@@ -122,40 +121,47 @@ function mapToJSON(strMap) {
     }
 
     return obj;
-    // return JSON.stringify(obj);
 }
 
 var KmerJS = (function () {
+    /**
+     * [constructor description]
+     * @param  {[type]} preffix  =             'ATGAC' [Filter kmers starting with]
+     * @param  {[type]} length   =             16      [Lenght of kmer: 16-mer]
+     * @param  {[type]} step     =             1       [Overlapping kmers of step STEP]
+     * @param  {[type]} coverage =             1       [minimun coverage]
+     * @param  {[type]} out      =             ''      [description]
+     * @param  {[type]} env      =             'node'  [description]
+     * @return {[type]}          [description]
+     */
+
     function KmerJS() {
-        var preffix = arguments.length <= 0 || arguments[0] === undefined ? 'ATGAC' : arguments[0];
-        var length = arguments.length <= 1 || arguments[1] === undefined ? 16 : arguments[1];
-        var step = arguments.length <= 2 || arguments[2] === undefined ? 1 : arguments[2];
-        var coverage = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
-        var out = arguments.length <= 4 || arguments[4] === undefined ? '' : arguments[4];
-        var env = arguments.length <= 5 || arguments[5] === undefined ? 'node' : arguments[5];
+        var fastq = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+        var preffix = arguments.length <= 1 || arguments[1] === undefined ? 'ATGAC' : arguments[1];
+        var length = arguments.length <= 2 || arguments[2] === undefined ? 16 : arguments[2];
+        var step = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
+        var coverage = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
+        var progress = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+        var env = arguments.length <= 6 || arguments[6] === undefined ? 'node' : arguments[6];
 
         _classCallCheck(this, KmerJS);
 
+        this.fastq = fastq;
         this.preffix = preffix;
         this.length = length;
         this.step = step;
-        this.out = out === '' ? undefined : out;
+        this.progress = progress;
         this.coverage = coverage;
         this.uKmers = 0;
-        // this.evalue = evalue || new BN(0.05);
         this.evalue = new _bignumberJs2['default'](0.05);
-        this.kmerMap = new Map();
+        this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
         this.env = env;
     }
 
     /**
-     * [findKmers description]
+     * [kmersInLine description]
      * @param  {[string]} line [Sequence read: ATGACCTGAGAGCCTT]
-     * @param  {[Map]} kmerMap [Kmers as keys and number of times seen as value]
-     * @param  {[integer]} length  [Lenght of kmer: 16-mer]
-     * @param  {[string]} preffix [Sequence to downsample the map: ATGAC]
-     * @param  {[integer]} step    [Overlapping kmers of step]
-     * @return {[true]}         [description]
+     * @return {[type]}      [description]
      */
 
     _createClass(KmerJS, [{
@@ -167,16 +173,20 @@ var KmerJS = (function () {
             for (var index = 0; index < stop; index += 1) {
                 var key = line.substring(ini, end);
                 if (key.startsWith(this.preffix)) {
-                    var count = this.kmerMap.get(key) || 0;
-                    this.kmerMap.set(key, count + 1);
+                    this.kmerMap.set(key, (this.kmerMap.get(key) || 0) + 1);
                 }
                 ini += this.step;
                 end = ini + this.length;
             }
         }
+
+        /**
+         * [readFile extract Kmers from file.]
+         * @return {[type]} [description]
+         */
     }, {
-        key: 'readLines',
-        value: function readLines() {
+        key: 'readFile',
+        value: function readFile() {
             var kmerObj = this;
             return new Promise(function (resolve) {
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
@@ -211,31 +221,29 @@ var KmerJS = (function () {
                     var line = undefined;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
-                            kmerObj.kmersInLine(line, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
-                            kmerObj.kmersInLine(complement(line), kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
+                            [line, complement(line)].forEach(function (line) {
+                                kmerObj.kmersInLine(line, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
+                            });
                             var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMap.size + '\r';
-                            if (kmerObj.env === 'node' && kmerObj.out !== undefined) {
+                            if (kmerObj.env === 'node' && kmerObj.progress) {
                                 process.stdout.write(progress);
                             } else if (kmerObj.env === 'browser') {
                                 // Console.log(progress);
                             }
                         } else if (i === 3) {
                                 i = -1;
-                            } //else if (i === 2) {
-                        //     if (line !== '+') {
-                        //         Console.log('ERROR!');
-                        //     }
-                        // } else if (i === 0) {
-                        //     if (line[0] !== '@') {
-                        //         Console.log('ERROR2!');
-                        //     }
-                        // }
+                            }
                         i += 1;
                         lines += 1;
                     }
                 });
 
                 liner.on('end', function () {
+                    // Clean up progress output
+                    if (kmerObj.env === 'node' && kmerObj.progress) {
+                        process.stdout.write('\r                               \n');
+                    }
+                    kmerObj.uKmers = kmerObj.kmerMap.size;
                     resolve(kmerObj.kmerMap);
                 });
             });

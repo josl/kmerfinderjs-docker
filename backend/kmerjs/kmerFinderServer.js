@@ -10,9 +10,11 @@ var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = 
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x9, _x10, _x11) { var _again = true; _function: while (_again) { var object = _x9, property = _x10, receiver = _x11; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x9 = parent; _x10 = property; _x11 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x11, _x12, _x13) { var _again = true; _function: while (_again) { var object = _x11, property = _x12, receiver = _x13; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x11 = parent; _x12 = property; _x13 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
@@ -38,177 +40,368 @@ var _mongoose2 = _interopRequireDefault(_mongoose);
 
 var _kmersJs = require('./kmers.js');
 
+_bignumberJs2['default'].config({ ROUNDING_MODE: 2 });
+
 var Schema = _mongoose2['default'].Schema;
 
 var kmerSchema = new Schema({
     lengths: Number,
     ulengths: Number,
     description: String,
-    reads: Array
+    reads: Array,
+    sequence: String
 });
 
 var kmerSummarySchema = new Schema({
     templates: Number,
     uniqueLens: Number,
-    totalLen: Number,
-    reads: Array
+    totalLen: Number
 });
 
+/**
+ * [findMatchesMongo description]
+ * @param  {[type]} kmerMap    [Dictionary of presence of Kmers]
+ * @param  {[type]} url        [description]
+ * @param  {[type]} collection [description]
+ * @return {[type]}            [description]
+ */
 function findMatchesMongo(kmerMap, url, collection) {
-    return new Promise(function (resolve, reject) {
-        // let db = mongoose.connect(url, {
-        //     server: { socketOptions: {keepAlive: 1}},
-        //     replset: { socketOptions: {keepAlive: 1}}
-        // });
-        kmerSchema.index({ reads: 1 });
-        kmerSchema.index({ sequence: 1 });
-        var kmerDB = _mongoose2['default'].model('Kmer', kmerSchema, collection);
-        var query = {
-            reads: {
-                $in: Array.from(kmerMap.keys())
-            }
-        };
-        // Get unique and total matches
-        var cursor = kmerDB.aggregate([{ $match: query }, { $limit: 30 }]);
+    var limit = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
 
-        cursor.unwind('$reads').match(query).group({
-            _id: { sequence: '$sequence', read: '$reads' },
-            uScore: { $sum: 1 }
-        })
-        // .sort({uScore: -1})
-        .exec(function (err, matches) {
-            if (err === null) {
-                var _iteratorNormalCompletion;
+    kmerSchema.index({ reads: 1 });
+    kmerSchema.index({ sequence: 1 });
+    var kmerDB = _mongoose2['default'].model(collection, kmerSchema, collection);
+    var query = {
+        reads: {
+            $in: Array.from(kmerMap.keys())
+        }
+    };
+    // Get unique and total matches
+    var templates = new Map();
+    var hits = undefined;
+    // Query to return matched templates
+    var cursor = kmerDB.aggregate([{ $match: query }]);
+    if (limit !== 0) {
+        cursor = cursor.limit(limit);
+    }
+    console.log(query);
+    return cursor.unwind('$reads').match(query).group({
+        _id: { sequence: '$sequence', read: '$reads' },
+        uScore: { $sum: 1 }
+    }).exec().then(function (matches) {
+        hits = _lodash2['default'].reduce(matches, function (total, n) {
+            return total + n.uScore;
+        }, 0);
+        console.log(hits);
+        if (hits !== 0) {
+            var _iteratorNormalCompletion = true;
+            var _didIteratorError = false;
+            var _iteratorError = undefined;
 
-                var _didIteratorError;
+            try {
+                for (var _iterator = matches[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                    var temp = _step.value;
 
-                var _iteratorError;
-
-                var _iterator, _step;
-
-                (function () {
-                    var hits = _lodash2['default'].reduce(matches, function (total, n) {
-                        return total + n.uScore;
-                    }, 0);
-                    if (hits !== 0) {
-                        (function () {
-                            var templates = new Map();
-                            _iteratorNormalCompletion = true;
-                            _didIteratorError = false;
-                            _iteratorError = undefined;
-
-                            try {
-                                for (_iterator = matches[Symbol.iterator](); !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                                    var temp = _step.value;
-
-                                    var read = temp._id.read;
-                                    var sequence = temp._id.sequence;
-                                    var match = templates.get(sequence);
-                                    var tCount = match ? match.tScore : 0;
-                                    var uCount = match ? match.uScore : 0;
-                                    tCount += kmerMap.get(read);
-                                    uCount += 1;
-                                    templates.set(sequence, {
-                                        tScore: tCount, uScore: uCount
-                                    });
-                                }
-                                // Get unique, total lenghts & species per match
-                            } catch (err) {
-                                _didIteratorError = true;
-                                _iteratorError = err;
-                            } finally {
-                                try {
-                                    if (!_iteratorNormalCompletion && _iterator['return']) {
-                                        _iterator['return']();
-                                    }
-                                } finally {
-                                    if (_didIteratorError) {
-                                        throw _iteratorError;
-                                    }
-                                }
-                            }
-
-                            query = {
-                                sequence: {
-                                    $in: Array.from(templates.keys())
-                                }
-                            };
-                            kmerDB.aggregate({ $match: query }).project({ id: '$sequence', lengths: 1, ulenght: 1, species: 1, _id: 0 }).exec(function (error, sequences) {
-                                if (error === null) {
-                                    var _iteratorNormalCompletion2 = true;
-                                    var _didIteratorError2 = false;
-                                    var _iteratorError2 = undefined;
-
-                                    try {
-                                        for (var _iterator2 = sequences[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                                            var seq = _step2.value;
-
-                                            var vals = templates.get(seq.id);
-                                            vals.lengths = seq.lengths;
-                                            vals.ulength = seq.ulenght;
-                                            vals.species = seq.species;
-                                            templates.set(seq.id, vals);
-                                        }
-                                        // db.disconnect();
-                                    } catch (err) {
-                                        _didIteratorError2 = true;
-                                        _iteratorError2 = err;
-                                    } finally {
-                                        try {
-                                            if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-                                                _iterator2['return']();
-                                            }
-                                        } finally {
-                                            if (_didIteratorError2) {
-                                                throw _iteratorError2;
-                                            }
-                                        }
-                                    }
-
-                                    resolve({
-                                        templates: templates,
-                                        hits: hits
-                                    });
-                                } else {
-                                    // db.disconnect();
-                                    reject(error.message);
-                                }
-                            });
-                        })();
-                    } else {
-                        // db.disconnect();
-                        reject('No hits were found!');
+                    var read = temp._id.read;
+                    var sequence = temp._id.sequence;
+                    var match = templates.get(sequence);
+                    var tCount = match ? match.tScore : 0;
+                    var uCount = match ? match.uScore : 0;
+                    tCount += kmerMap.get(read);
+                    uCount += 1;
+                    templates.set(sequence, {
+                        tScore: tCount, uScore: uCount
+                    });
+                }
+                // Get unique, total lenghts & species per match
+            } catch (err) {
+                _didIteratorError = true;
+                _iteratorError = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion && _iterator['return']) {
+                        _iterator['return']();
                     }
-                })();
+                } finally {
+                    if (_didIteratorError) {
+                        throw _iteratorError;
+                    }
+                }
+            }
+
+            query = {
+                sequence: {
+                    $in: Array.from(templates.keys())
+                }
+            };
+            var projection = {
+                id: '$sequence', lengths: 1, ulenght: 1,
+                species: 1, _id: 0
+            };
+            return kmerDB.aggregate({ $match: query }).project(projection).exec();
+        } else {
+            throw new Error('No hits were found!');
+        }
+    }).then(function (sequences) {
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+            for (var _iterator2 = sequences[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                var seq = _step2.value;
+
+                var vals = templates.get(seq.id);
+                vals.lengths = seq.lengths;
+                vals.ulength = seq.ulenght;
+                vals.species = seq.species;
+                templates.set(seq.id, vals);
+            }
+        } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion2 && _iterator2['return']) {
+                    _iterator2['return']();
+                }
+            } finally {
+                if (_didIteratorError2) {
+                    throw _iteratorError2;
+                }
+            }
+        }
+
+        return {
+            templates: templates,
+            hits: hits
+        };
+    })
+    // .catch(function(error){
+    //     console.log(error, 'first time');
+    //     throw error;
+    // })
+    ;
+}
+/**
+ * [findKmersTemplate Queries DB for matche's kmers]
+ * @param  {[String]} template [Sequence template]
+ * @return {[Array]}           [Array of kmers]
+ */
+function findKmersTemplate(template, collection) {
+    var kmerDB = _mongoose2['default'].model(collection, kmerSchema, collection);
+    return kmerDB.findOne({ sequence: template }, { reads: 1 }).exec();
+}
+
+/**
+ * [matchSummary description]
+ * @param  {[type]} kmerObject [description]
+ * @param  {[type]} sequence   [description]
+ * @param  {[type]} match      [description]
+ * @param  {[type]} results    [description]
+ * @param  {[type]} summary    [description]
+ * @return {[type]}            [description]
+ */
+function matchSummary(kmerObject, sequence, match, results, summary) {
+    var minScore = 0;
+    if (match.uScore > minScore) {
+        var z = (0, _stats.zScore)(match.uScore, match.ulength, results.hits, summary.uniqueLens);
+        var probability = (0, _stats.fastp)(z).times(summary.templates);
+        var allow = kmerObject.evalue.cmp(probability); // p <= evalue
+        if (allow >= 0) {
+            var fracQ = new _bignumberJs2['default'](100).times(2).times(match.uScore).dividedBy(new _bignumberJs2['default'](kmerObject.uKmers).plus(_stats.etta));
+            var fracD = new _bignumberJs2['default'](100).times(match.uScore).dividedBy(new _bignumberJs2['default'](match.ulength).plus(_stats.etta));
+            return new Map([['template', sequence], ['score', match.uScore], ['expected', results.hits * match.ulength / summary.uniqueLens], ['z', z.toNumber()], ['probability', probability.toNumber()], ['frac-q', fracQ.toNumber()], ['frac-d', fracD.toNumber()], ['coverage', match.tScore / match.lengths], ['ulength', match.ulength],
+            // ['total-frac-q', 100 * 2 * match.uScore / (kmerObject.uKmers + etta)],
+            // ['total-frac-d', 100 * match.uScore / (match.ulength + etta)],
+            // ['total-coverage', match.tScore / match.lengths],
+            ['species', match.species]]);
+        }
+    }
+}
+
+/**
+ * [sortKmerResults description]
+ * @param  {[type]} a [Match Summary entry]
+ * @param  {[type]} b [description]
+ * @return {[type]}   [description]
+ */
+function sortKmerResults(a, b) {
+    if (a.get('score') > b.get('score')) {
+        return -1;
+    }
+    if (a.get('score') < b.get('score')) {
+        return 1;
+    }
+    // a must be equal to b
+    return 0;
+}
+/**
+ * [sortKmerMatches Sort Matches by Hits (= Score)]
+ * @param  {[type]} a [Match]
+ * @param  {[type]} b [Match]
+ * @return {[type]}   [description]
+ */
+function sortKmerMatches(a, b) {
+    if (a[1].uScore > b[1].uScore) {
+        return -1;
+    }
+    if (a[1].uScore < b[1].uScore) {
+        return 1;
+    }
+    // a must be equal to b
+    return 0;
+}
+
+/**
+ * [standardScoring description]
+ * @param  {[Object]} kmerObject [Instance of KmerServer]
+ * @param  {[Map]}    kmerMap    [Dictionary of presence of Kmers]
+ * @return {[type]}              [description]
+ */
+function standardScoring(kmerObject, kmerMap) {
+    var kmerResults = [];
+    return Promise.all([_mongoose2['default'].model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }).exec(), findMatchesMongo(kmerMap, kmerObject.db.url, kmerObject.collection)]).then(function (_ref) {
+        var _ref2 = _slicedToArray(_ref, 2);
+
+        var summary = _ref2[0];
+        var results = _ref2[1];
+        var _iteratorNormalCompletion3 = true;
+        var _didIteratorError3 = false;
+        var _iteratorError3 = undefined;
+
+        try {
+            for (var _iterator3 = results.templates[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                var _step3$value = _slicedToArray(_step3.value, 2);
+
+                var sequence = _step3$value[0];
+                var match = _step3$value[1];
+
+                kmerResults.push(matchSummary(kmerObject, sequence, match, results, summary));
+            }
+        } catch (err) {
+            _didIteratorError3 = true;
+            _iteratorError3 = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion3 && _iterator3['return']) {
+                    _iterator3['return']();
+                }
+            } finally {
+                if (_didIteratorError3) {
+                    throw _iteratorError3;
+                }
+            }
+        }
+
+        return kmerResults.sort(sortKmerResults);
+    })['catch'](function (error) {
+        console.log(error);
+        // Receives first rejection among the Promises
+        throw error;
+    });
+}
+
+/**
+ * [winnerScoringRecursive2description]
+ * @param  {[Object]} summary    [Summary query from DB]
+ * @param  {[Map]}    kmerMap    [Dictionary of presence of Kmers]
+ * @param  {[Object]} kmerObject [Instance of KmerServer]
+ * @return {[type]}              [description]
+ */
+function winnerScoringRecursive(summary, kmerMap, kmerObject) {
+    var hitCounter = 0;
+    var notFound = true;
+    var maxHits = 100;
+    var kmerResults = [];
+
+    function recursiveAction() {
+        return findMatchesMongo(kmerMap, kmerObject.db.url, kmerObject.collection, 1).then(function (results) {
+            var templates = [].concat(_toConsumableArray(results.templates)).sort(sortKmerMatches);
+            var winner = matchSummary(kmerObject, templates[0][0], templates[0][1], results, summary);
+            // Winner is undefined if match's score < minScore
+            if (winner && kmerObject.evalue.cmp(winner.get('probability')) >= 0) {
+                hitCounter += 1;
+                kmerResults.push(winner);
+                return findKmersTemplate(winner.get('template'), kmerObject.collection);
+            }
+        }).then(function (matchReads) {
+            if (matchReads) {
+                // remove all kmers in best hit from kmerMap
+                matchReads.reads.forEach(function (kmer) {
+                    kmerMap['delete'](kmer);
+                });
+                return;
             } else {
-                // db.disconnect();
-                reject(err.message);
+                notFound = false;
+                return;
             }
         });
-    });
+    }
+
+    var loop = function loop() {
+        if (!(notFound && hitCounter < maxHits)) {
+            return kmerResults;
+        } else {
+            return recursiveAction().then(loop)
+            // .catch(function (error) {
+            //     throw new Error(error);
+            // })
+            ;
+        }
+    };
+    return loop();
+}
+/**
+ * [winnerScoring Winner takes All scoring scheme]
+ * @param  {[type]} kmerObject [KmerJS Object]
+ * @param  {[type]} kmerMap    [DNA sequence in Kmer space]
+ * @return {[type]}            [Promise]
+ */
+function winnerScoring(kmerObject, kmerMap) {
+    return _mongoose2['default'].model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }).then(function (summary) {
+        return winnerScoringRecursive(summary, kmerMap, kmerObject);
+    })
+    // .catch(function (error) {
+    //     console.log(error);
+    //     // Receives first rejection among the Promises
+    //     throw error;
+    // })
+    ;
 }
 
 var KmerFinderServer = (function (_KmerJS) {
     _inherits(KmerFinderServer, _KmerJS);
+
+    /**
+     * [constructor description]
+     * @param  {[type]} fastq                                 [description]
+     * @param  {[type]} preffix                               =             'ATGAC'   [description]
+     * @param  {[type]} length                                =             16        [description]
+     * @param  {[type]} step                                  =             1         [description]
+     * @param  {[type]} coverage                              =             1         [description]
+     * @param  {[type]} out                                   =             ''        [description]
+     * @param  {[type]} db                                    =             'mongo'   [description]
+     * @param  {[type]} method                                =             'standar' [description]
+     * @param  {[type]} url='mongodb://localhost:27017/Kmers' [description]
+     * @param  {[type]} collection='genomes'                  [description]
+     * @return {[type]}                                       [description]
+     */
 
     function KmerFinderServer(fastq) {
         var preffix = arguments.length <= 1 || arguments[1] === undefined ? 'ATGAC' : arguments[1];
         var length = arguments.length <= 2 || arguments[2] === undefined ? 16 : arguments[2];
         var step = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
         var coverage = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
-        var out = arguments.length <= 5 || arguments[5] === undefined ? '' : arguments[5];
+        var progress = arguments.length <= 5 || arguments[5] === undefined ? true : arguments[5];
         var db = arguments.length <= 6 || arguments[6] === undefined ? 'mongo' : arguments[6];
-        var url = arguments.length <= 7 || arguments[7] === undefined ? 'mongodb://localhost:27017/Kmers' : arguments[7];
+        var url = arguments.length <= 7 || arguments[7] === undefined ? 'mongodb:\/\/localhost:27017/Kmers' : arguments[7];
         var collection = arguments.length <= 8 || arguments[8] === undefined ? 'genomes' : arguments[8];
+        var method = arguments.length <= 9 || arguments[9] === undefined ? 'standard' : arguments[9];
 
         _classCallCheck(this, KmerFinderServer);
 
-        _get(Object.getPrototypeOf(KmerFinderServer.prototype), 'constructor', this).call(this, preffix, length, step, coverage, out, 'node');
-        this.fastq = fastq;
-        // this.db = {
-        //     type: db,
-        //     url: url
-        // };
+        _get(Object.getPrototypeOf(KmerFinderServer.prototype), 'constructor', this).call(this, fastq, preffix, length, step, coverage, progress, 'node');
         this.db = {
             connection: _mongoose2['default'].connect(url, {
                 server: { socketOptions: { keepAlive: 120 } },
@@ -216,90 +409,41 @@ var KmerFinderServer = (function (_KmerJS) {
             }),
             type: db
         };
+        this.method = method;
         this.collection = collection;
     }
+
+    /**
+     * [findKmers Wrapper around reading file function]
+     * @return {[Map]} [Kmer Map]
+     */
 
     _createClass(KmerFinderServer, [{
         key: 'findKmers',
         value: function findKmers() {
-            // this.db.connection.disconnect();
-            return this.readLines();
+            return this.readFile();
         }
+
+        /**
+         * [findMatches description]
+         * @param  {[Map]}     kmerMap [Kmer Map]
+         * @return {[Promise]}         [description]
+         */
     }, {
         key: 'findMatches',
         value: function findMatches(kmerMap) {
-            var minScore = 0;
-            var url = this.db.url;
-            var that = this;
-            return new Promise(function (resolve, reject) {
-                findMatchesMongo(kmerMap, url, that.collection).then(function (results) {
-                    // let db = mongoose.connect(url);
-                    var KmerSummary = _mongoose2['default'].model('Summary', kmerSummarySchema, 'Summary');
-                    return KmerSummary.findOne({ templates: { $gt: 1 } }).exec(function (error, summary) {
-                        if (error) {
-                            _console2['default'].log(error);
-                            reject(error);
-                        }
-                        // that.db.connection.close();
-                        var kmerResults = [];
-                        var _iteratorNormalCompletion3 = true;
-                        var _didIteratorError3 = false;
-                        var _iteratorError3 = undefined;
-
-                        try {
-                            for (var _iterator3 = results.templates[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                                var _step3$value = _slicedToArray(_step3.value, 2);
-
-                                var sequence = _step3$value[0];
-                                var match = _step3$value[1];
-
-                                if (match.uScore > minScore) {
-                                    var z = (0, _stats.zScore)(match.uScore, match.ulength, results.hits, summary.uniqueLens);
-                                    var probability = (0, _stats.fastp)(z).times(summary.templates);
-                                    var allow = that.evalue.cmp(probability); // p <= evalue
-                                    if (allow >= 0) {
-                                        var fracQ = new _bignumberJs2['default'](100).times(2).times(match.uScore).dividedBy(new _bignumberJs2['default'](that.uKmers).plus(_stats.etta));
-                                        var fracD = new _bignumberJs2['default'](100).times(match.uScore).dividedBy(new _bignumberJs2['default'](match.ulength).plus(_stats.etta));
-                                        // Console.log(fracQ);
-                                        kmerResults.push(new Map([['template', sequence], ['score', match.uScore], ['expected', results.hits * match.ulength / summary.uniqueLens], ['z', z.toNumber()], ['probability', probability.toNumber()], ['frac-q', fracQ.toNumber()], ['frac-d', fracD.toNumber()], ['coverage', match.tScore / match.lengths], ['ulength', match.ulength],
-                                        // ['total-frac-q', 100 * 2 * match.uScore / (that.uKmers + etta)],
-                                        // ['total-frac-d', 100 * match.uScore / (match.ulength + etta)],
-                                        // ['total-coverage', match.tScore / match.lengths],
-                                        ['species', match.species]]));
-                                    }
-                                }
-                            }
-                        } catch (err) {
-                            _didIteratorError3 = true;
-                            _iteratorError3 = err;
-                        } finally {
-                            try {
-                                if (!_iteratorNormalCompletion3 && _iterator3['return']) {
-                                    _iterator3['return']();
-                                }
-                            } finally {
-                                if (_didIteratorError3) {
-                                    throw _iteratorError3;
-                                }
-                            }
-                        }
-
-                        var sortedResults = kmerResults.sort(function (a, b) {
-                            if (a.get('score') > b.get('score')) {
-                                return -1;
-                            }
-                            if (a.get('score') < b.get('score')) {
-                                return 1;
-                            }
-                            // a must be equal to b
-                            return 0;
-                        });
-                        resolve(sortedResults);
-                    });
-                }, function (err) {
-                    console.log(err); // Error: "It broke"
-                });
-            });
+            if (this.method === 'standard') {
+                return standardScoring(this, kmerMap);
+            } else if (this.method === 'winner') {
+                return winnerScoring(this, kmerMap);
+            } else {
+                throw new Error('Scoring scheme unknown');
+            }
+        }
+    }, {
+        key: 'close',
+        value: function close() {
+            this.db.connection.disconnect();
         }
     }]);
 
