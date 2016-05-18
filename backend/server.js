@@ -40,7 +40,7 @@ app.post('/kmers', textParser, function (req, res) {
                 '',
                 'ATGAC', 16, 1, 1, true, 'mongo',
                 'mongodb://mongo:' + process.env.PORT + query.get('db'),
-                query.get('db'), 'winner'
+                query.get('collection'), 'winner'
             );
             console.log(query.size);
             query.delete('db');
