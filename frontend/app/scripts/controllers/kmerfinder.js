@@ -34,8 +34,8 @@ angular.module('cgeUploaderApp')
                         .then(function (response) {
                             // TODO: Chech status code
                             // ans.toJSON()
+                            console.log('resolved!');
                             var data = '';
-                            console.log(response);
                             response
                                 .on('data', function(chunk) {
                                     // compressed data as it is received

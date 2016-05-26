@@ -8,17 +8,21 @@
         <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p> -->
     </div>
     <drop-files-button active="true" is-service="true"></drop-files-button>
+    <!-- <div class="alert alert-danger text-center" role="alert" ng-show="error">
+        <h4>
+            {{errorMessage}}
+        </h4>
+    </div> -->
     <div ng-show="isolateFiles.length !== 0" class="well well-lg">
-        <p class="text-center">
-            <button id="submitButton" ng-click="analize()" type="button" class="btn btn-material-indigo-500 btn-lg btn-block">
+        <!-- <p class="text-center"> -->
+            <button id="submitButton" ng-click="analize()" type="button" class="text-center btn btn-material-indigo-500 btn-lg btn-block">
                 Predict Species
             </button>
-        </p>
-        <div class="alert alert-danger text-center" role="alert" ng-show="error">
-            <h3>
-                {{errorMessage}}
-            </h3>
-        </div>
+        <!-- </p> -->
+    <div class="text-center">
+        <span ng-show="error" class="label label-danger ">{{errorMessage}}</span>
+
+    </div>
         <div ng-repeat="f in isolateFiles">
             <h3 ng-show="f.match" class="text-center">Congrats! You got a
                 <span style="color: #ff5722">{{f.species}}</span>
