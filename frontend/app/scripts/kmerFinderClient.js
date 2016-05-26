@@ -299,23 +299,24 @@ var KmerFinderClient = (function (_KmerJS) {
                     console.log(formData);
                     kmerQuery.set('db', that.dbName);
                     kmerQuery.set('collection', that.collection);
-                    fromString(JSON.stringify((0, _kmersJs.mapToJSON)(kmerQuery))).pipe(_request2['default'].post(that.dbURL, function (err, response, body) {
-                        console.log(err, body);
+                    fromString(JSON.stringify((0, _kmersJs.mapToJSON)(kmerQuery))).pipe(_request2['default'].post(that.dbURL)
+                    // .form(formData)
+                    .on('response', function (response, body) {
                         if (response.statusCode === 201 || response.statusCode === 200 || response.statusCode === 202) {
                             console.log('resolving!');
                             resolve(response);
+                        } else if (response.statusCode === 204) {
+                            console.log('we get an empty dataset!', response, response.toJSON());
+                            reject('No hits were found!');
                         } else {
-                            console.log('we get an error!', err);
-                            reject(body);
+                            console.log('we get an error!', response, response.toJSON);
+                            console.log('we get an error!', response, response.toJSON());
+                            reject('error');
                         }
-                    })
-                    // .form(formData)
-                    // .on('response', function (response) {
-                    //     console.log(response);
-                    //     resolve(response);
-                    // })
-
-                    );
+                    }).on('error', function (err) {
+                        console.log('we get an error!', err);
+                        reject(err);
+                    }));
                 }
             });
         }
@@ -325,11 +326,6 @@ var KmerFinderClient = (function (_KmerJS) {
 })(_kmersJs.KmerJS);
 
 exports.KmerFinderClient = KmerFinderClient;
-
-// .on('error', function (err) {
-//     console.log('we get an error!', err);
-//     reject(err);
-// })
 
 },{"./kmers.js":2,"./stats":3,"bignumber.js":7,"console":196,"from2":20,"request":60}],2:[function(require,module,exports){
 (function (process){
@@ -514,18 +510,17 @@ var KmerJS = (function () {
         var length = arguments.length <= 2 || arguments[2] === undefined ? 16 : arguments[2];
         var step = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
         var coverage = arguments.length <= 4 || arguments[4] === undefined ? 1 : arguments[4];
-        var progress = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+        var progress = arguments.length <= 5 || arguments[5] === undefined ? true : arguments[5];
         var env = arguments.length <= 6 || arguments[6] === undefined ? 'node' : arguments[6];
 
         _classCallCheck(this, KmerJS);
 
         this.fastq = fastq;
         this.preffix = preffix;
-        this.length = length;
+        this.kmerLength = length;
         this.step = step;
         this.progress = progress;
         this.coverage = coverage;
-        this.uKmers = 0;
         this.evalue = new _bignumberJs2['default'](0.05);
         this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
         this.env = env;
@@ -541,15 +536,15 @@ var KmerJS = (function () {
         key: 'kmersInLine',
         value: function kmersInLine(line) {
             var ini = 0;
-            var end = this.length;
-            var stop = line.length - this.length + 1;
-            for (var index = 0; index < stop; index += 1) {
-                var key = line.substring(ini, end);
-                if (key.startsWith(this.preffix)) {
-                    this.kmerMap.set(key, (this.kmerMap.get(key) || 0) + 1);
+            var end = this.kmerLength;
+            var stop = line.length - this.kmerLength;
+            for (var index = 0; index <= stop; index += 1) {
+                var kmer = line.substring(ini, end);
+                if (kmer.startsWith(this.preffix)) {
+                    this.kmerMap.set(kmer, (this.kmerMap.get(kmer) || 0) + 1);
                 }
                 ini += this.step;
-                end = ini + this.length;
+                end = ini + this.kmerLength;
             }
         }
 
@@ -594,8 +589,8 @@ var KmerJS = (function () {
                     var line = undefined;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
-                            [line, complement(line)].forEach(function (line) {
-                                kmerObj.kmersInLine(line, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
+                            [line, complement(line)].forEach(function (kmerLine) {
+                                kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
                             });
                             var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMap.size + '\r';
                             if (kmerObj.env === 'node' && kmerObj.progress) {
@@ -614,9 +609,8 @@ var KmerJS = (function () {
                 liner.on('end', function () {
                     // Clean up progress output
                     if (kmerObj.env === 'node' && kmerObj.progress) {
-                        process.stdout.write('\r                               \n');
+                        process.stdout.write('\n                               \n');
                     }
-                    kmerObj.uKmers = kmerObj.kmerMap.size;
                     resolve(kmerObj.kmerMap);
                 });
             });
