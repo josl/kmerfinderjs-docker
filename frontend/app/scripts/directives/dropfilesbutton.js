@@ -28,13 +28,17 @@ angular.module('cgeUploaderApp')
                             {field: 'species', width: '50%'},
                             {field: 'template', width: '20%'},
                             {field: 'score', width: '10%'},
-                            {field: 'expected', width: '15%'},
+                            {field: 'expected', width: '10%'},
                             {field: 'z', width: '15%'},
                             {field: 'probability', width: '10%'},
                             {field: 'frac-q', width: '15%'},
                             {field: 'frac-d', width: '15%'},
-                            {field: 'coverage', width: '18%'},
-                            {field: 'ulength', width: '10%'},
+                            {field: 'depth', width: '18%'},
+                            {field: 'kmers-template', width: '10%'},
+                            {field: 'total-frac-d', width: '10%'},
+                            {field: 'total-frac-q', width: '10%'},
+                            {field: 'total-temp-cover', width: '10%'},
+
                         ],
                         data: []
                     };
