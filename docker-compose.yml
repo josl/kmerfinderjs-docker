@@ -23,3 +23,14 @@ mongo:
         - ./database:/kmer-database
         - ./scripts:/src
         - /data/docker:/data/db
+mongoexpress:
+    image: mongo-express
+    ports:
+        - "5001:8081"
+    links:
+        - mongo
+    environment:
+        ME_CONFIG_MONGODB_SERVER: mongo
+        ME_CONFIG_MONGODB_PORT: 27017
+        ME_CONFIG_BASICAUTH_USERNAME: "root"
+        ME_CONFIG_BASICAUTH_PASSWORD: "test"

@@ -1,14 +1,36 @@
-web:
-  build: .
+angular:
+  image: httpd
   ports:
-   - "5000:80"
-  volumes:
-   - .:/code
+    - "9999:80"
   links:
-   - mongo
-mongo:
-  image: mongo:latest
+    - node
   volumes:
-      - /home/data2/databases/kmer_databases/current:/kmer-database
-      - ./scripts:/src
-      - /home/data2/databases/mongo:/data/db
+    - ./frontend/dist:/usr/local/apache2/htdocs/
+node:
+    build: .
+    command: "npm start"
+    ports:
+        - "5000:80"
+    links:
+        - mongo
+    environment:
+        PORT: 27017
+    # volumes:
+    #     - ./backend:/usr/src/app
+mongo:
+    image: mongo:latest
+    volumes:
+        - ./database:/kmer-database
+        - ./scripts:/src
+        - /data/docker:/data/db
+mongoexpress:
+    image: mongo-express
+    ports:
+        - "5001:8081"
+    links:
+        - mongo
+    environment:
+        ME_CONFIG_MONGODB_SERVER: mongo
+        ME_CONFIG_MONGODB_PORT: 27017
+        ME_CONFIG_BASICAUTH_USERNAME: "root"
+        ME_CONFIG_BASICAUTH_PASSWORD: "test"
