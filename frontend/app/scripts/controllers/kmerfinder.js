@@ -24,7 +24,7 @@ angular.module('cgeUploaderApp')
                     //   $http.get(API.url);
                       var kmerjs = new kmerModule.KmerFinderClient(
                           file, 'browser', 'ATGAC', 16, 1, 1, true, 'server',
-                          API.url + 'kmers', '', 'Bacteria', 'Kmers');
+                          API.url + 'kmers', '', 'KmerBacteria', 'Kmers');
                       // Own reading file function
                       console.log(kmerjs);
                       kmerjs.findKmers()
