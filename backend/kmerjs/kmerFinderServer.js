@@ -64,7 +64,7 @@ var kmerMapSchema = new Schema({
 });
 
 function extractKmers() {
-    return _mongoose2['default'].model(kmerObject.collection, kmerMapSchema, kmerObject.collection).aggregate([{
+    return _mongoose2['default'].model('Bacteria', kmerMapSchema, 'Bacteria').aggregate([{
         $match: {}
     }]).unwind('reads').group({
         _id: { read: '$reads' },
@@ -78,7 +78,7 @@ function extractKmers() {
         }
     }).project({
         _id: 0, kmer: '$_id.read', templates: '$templates'
-    }).out('KmerMap').allowDiskUse(true).exec();
+    }).out('KmerBacteria').allowDiskUse(true).exec();
 }
 
 function findMatchesMapReduce(kmerMap, url, collection) {
@@ -128,9 +128,7 @@ function findKmersMatches(kmerMap, url, collection, progress) {
         ulengths: '$_id.template.ulengths',
         species: '$_id.template.species',
         filteredReads: '$filteredReads'
-    })
-    // .out('KmerMapTest')
-    .exec().then(function (hits) {
+    }).allowDiskUse(true).exec().then(function (hits) {
         var templates = new Map();
         var nHits = 0;
         var _iteratorNormalCompletion = true;
