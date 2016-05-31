@@ -6,7 +6,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-var _libKmerFinderServer = require('./kmerFinderServer.js');
+var _libKmerFinderServer = require('../dist/kmerFinderServer');
 
 var _console = require('console');
 
@@ -80,20 +80,20 @@ cli.main(function (args, options) {
             var keys = [].concat(_toConsumableArray(kmerMap.keys()));
             _console2['default'].log('Kmers: ', keys.length);
             kmerjs.findMatches(kmerMap).then(function (output) {
-                _console2['default'].log('Template\tScore\tExpected\tz\tp_value\tquery\tcoverage [%]\ttemplate coverage [%]\tdepth\tKmers in Template\tDescription');
-                output.forEach(function (data) {
-                    var seq = data.get('template');
-                    var score = data.get('score');
-                    var expec = data.get('expected');
-                    var z = data.get('z');
-                    var p = data.get('probability');
-                    var fracQ = data.get('frac-q');
-                    var fracD = data.get('frac-d');
-                    var cov = data.get('depth');
-                    var ulen = data.get('kmers-template');
-                    var spec = data.get('species');
-                    _console2['default'].log(seq + '\t' + score + '\t' + expec + '\t' + z + '\t' + p + '\t' + fracQ + '\t' + fracD + '\t' + cov + '\t' + ulen + '\t' + spec + '\t');
-                });
+                // Console.log('Template\tScore\tExpected\tz\tp_value\tquery\tcoverage [%]\ttemplate coverage [%]\tdepth\tKmers in Template\tDescription');
+                // output.forEach(function (data) {
+                //     let seq = data.get('template');
+                //     let score = data.get('score');
+                //     let expec = data.get('expected');
+                //     let z = data.get('z');
+                //     let p = data.get('probability');
+                //     let fracQ = data.get('frac-q');
+                //     let fracD = data.get('frac-d');
+                //     let cov = data.get('depth');
+                //     let ulen = data.get('kmers-template');
+                //     let spec = data.get('species');
+                //     Console.log(`${seq}\t${score}\t${expec}\t${z}\t${p}\t${fracQ}\t${fracD}\t${cov}\t${ulen}\t${spec}\t`);
+                // });
                 kmerjs.close();
                 process.exit();
             });

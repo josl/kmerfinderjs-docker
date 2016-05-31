@@ -16,6 +16,7 @@
     "bignumber.js": "",
     "brfs": "",
     "bson": "",
+    "cli": "",
     "chai-json-equal": "",
     "envify": "",
     "filereader-stream": "",
