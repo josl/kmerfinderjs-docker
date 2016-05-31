@@ -512,7 +512,7 @@ function winnerScoringRecursive(summary, kmerMap, kmerObject) {
                 var cov = winner.get('depth');
                 var ulen = winner.get('kmers-template');
                 var spec = winner.get('species');
-                var out = seq + '\t' + score + '\t' + expec + '\t' + z + '\t' + p + '\t' + fracQ + '\t\'' + fracD + '\t' + cov + '\t' + ulen + '\t' + spec + '\n';
+                var out = seq + '\t' + score + '\t' + expec + '\t' + z + '\t' + p + '\t' + fracQ + '\t' + fracD + '\t' + cov + '\t' + ulen + '\t' + spec + '\n';
                 process.stdout.write(out);
             }
             return results.templates.get(winner.get('template')).reads;
@@ -708,7 +708,7 @@ var KmerFinderServer = (function (_KmerJS) {
     _createClass(KmerFinderServer, [{
         key: 'findKmers',
         value: function findKmers() {
-            return this.readFile();
+            return this.readFile().promise;
         }
 
         /**

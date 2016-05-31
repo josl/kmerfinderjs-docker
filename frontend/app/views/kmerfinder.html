@@ -24,6 +24,12 @@
 
     </div>
         <div ng-repeat="f in isolateFiles">
+            <div class="text-center">
+                Reading {{f.lines}} lines... ({{f.kmers}} kmers found so far)
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{f.dataRead}}%;"></div>
+                </div>
+            </div>
             <h3 ng-show="f.match" class="text-center">Congrats! You got a
                 <span style="color: #ff5722">{{f.species}}</span>
             </h3>
