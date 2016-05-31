@@ -36,6 +36,10 @@ var _filereaderStream = require('filereader-stream');
 
 var _filereaderStream2 = _interopRequireDefault(_filereaderStream);
 
+var _events = require('events');
+
+var _events2 = _interopRequireDefault(_events);
+
 var fs = require('fs');
 var complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
 
@@ -155,6 +159,9 @@ var KmerJS = (function () {
         this.evalue = new _bignumberJs2['default'](0.05);
         this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
         this.env = env;
+        if (env === 'browser') {
+            this.fileDataRead = 0;
+        }
     }
 
     /**
@@ -187,7 +194,9 @@ var KmerJS = (function () {
         key: 'readFile',
         value: function readFile() {
             var kmerObj = this;
-            return new Promise(function (resolve) {
+            var eventEmmitter = new _events2['default'].EventEmitter();
+            var promise = new Promise(function (resolve) {
+
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
                 var liner = new _stream2['default'].Transform({ objectMode: true });
                 liner._transform = function (chunk, encoding, done) {
@@ -195,8 +204,13 @@ var KmerJS = (function () {
                     if (this._lastLineData) {
                         data = this._lastLineData + data;
                     }
-
                     var lines = data.split('\n');
+                    kmerObj.bytesRead += chunk.length;
+                    kmerObj.linesPerChunk += lines.length;
+                    if (kmerObj.env === 'browser') {
+                        kmerObj.fileDataRead += kmerObj.lines * kmerObj.bytesRead / kmerObj.linesPerChunk;
+                        eventEmmitter.emit('progress');
+                    }
                     this._lastLineData = lines.splice(lines.length - 1, 1)[0];
 
                     lines.forEach(this.push.bind(this));
@@ -209,6 +223,7 @@ var KmerJS = (function () {
                     this._lastLineData = null;
                     done();
                 };
+
                 if (kmerObj.env === 'node') {
                     fs.createReadStream(kmerObj.fastq).pipe(liner);
                 } else if (kmerObj.env === 'browser') {
@@ -216,6 +231,9 @@ var KmerJS = (function () {
                 }
                 var i = 0;
                 var lines = 0;
+                kmerObj.lines = 0;
+                kmerObj.bytesRead = 0;
+                kmerObj.linesPerChunk = 0;
                 liner.on('readable', function () {
                     var line = undefined;
                     while (null !== (line = liner.read())) {
@@ -223,20 +241,18 @@ var KmerJS = (function () {
                             [line, complement(line)].forEach(function (kmerLine) {
                                 kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
                             });
-                            var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMap.size + '\r';
-                            if (kmerObj.env === 'node' && kmerObj.progress) {
-                                process.stdout.write(progress);
-                            } else if (kmerObj.env === 'browser') {
-                                // Console.log(progress);
-                            }
                         } else if (i === 3) {
-                                i = -1;
-                            }
+                            i = -1;
+                        }
                         i += 1;
                         lines += 1;
+                        kmerObj.lines = lines;
+                        if (kmerObj.env === 'node' && kmerObj.progress) {
+                            var progress = 'Lines: ' + lines + ' /Kmers: ' + kmerObj.kmerMap.size + '\r';
+                            process.stdout.write(progress);
+                        }
                     }
                 });
-
                 liner.on('end', function () {
                     // Clean up progress output
                     if (kmerObj.env === 'node' && kmerObj.progress) {
@@ -245,6 +261,10 @@ var KmerJS = (function () {
                     resolve(kmerObj.kmerMap);
                 });
             });
+            return {
+                promise: promise,
+                event: eventEmmitter
+            };
         }
     }]);
 

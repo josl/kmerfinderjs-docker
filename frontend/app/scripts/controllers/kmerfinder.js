@@ -25,10 +25,18 @@ angular.module('cgeUploaderApp')
                       var kmerjs = new kmerModule.KmerFinderClient(
                           file, 'browser', 'ATGAC', 16, 1, 1, true, 'server',
                           API.url + 'kmers', '', 'KmerBacteria', 'Kmers');
+                      $scope.fileProgress = kmerjs.lines;
                       // Own reading file function
                       console.log(kmerjs);
-                      kmerjs.findKmers()
-                        .then(function (kmers) {
+                      var kmers = kmerjs.findKmers();
+                      kmers.event.on('progress', function() {
+                          file.lines = kmerjs.lines;
+                          file.kmers = kmerjs.kmerMap.size;
+                          file.dataRead = kmerjs.fileDataRead * 100 / file.size;
+                          $scope.$apply();
+                      });
+                      kmers.promise.then(function (kmers) {
+                            console.log('Let\'s find some matches! ');
                             return kmerjs.findMatches(kmers);
                         })
                         .then(function (response) {
