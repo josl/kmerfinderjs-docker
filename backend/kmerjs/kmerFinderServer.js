@@ -103,10 +103,10 @@ function findMatchesMapReduce(kmerMap, url, collection) {
     });
 }
 
-function findKmersMatches(kmerMap, url, collection) {
+function findKmersMatches(kmerMap, conn, collection) {
     kmerMapSchema.index({ reads: 1 });
     kmerMapSchema.index({ 'templates.sequence': 1 });
-    var kmerDB = _mongoose2['default'].model(collection, kmerMapSchema, collection);
+    var kmerDB = conn.model(collection, kmerMapSchema, collection);
     var kmerQuery = [].concat(_toConsumableArray(kmerMap.keys()));
 
     return new Promise(function (resolve, reject) {
@@ -595,7 +595,7 @@ function winnerScoringRecursive(summary, kmerMap, kmerObject) {
             }
         }
     };
-    return findKmersMatches(kmerMap, kmerObject.db.url, kmerObject.collection, kmerObject.progress).then(findWinner).then(removeWinnerKmers).then(loop);
+    return findKmersMatches(kmerMap, kmerObject.conn, kmerObject.collection, kmerObject.progress).then(findWinner).then(removeWinnerKmers).then(loop);
 }
 /**
  * [winnerScoring Winner takes All scoring scheme]
@@ -604,7 +604,8 @@ function winnerScoringRecursive(summary, kmerMap, kmerObject) {
  * @return {[type]}            [Promise]
  */
 function winnerScoring(kmerObject, kmerMap) {
-    return _mongoose2['default'].model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }, { _id: 0 }).then(function (summary) {
+    return kmerObject.conn.model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }, { _id: 0 }).then(function (summary) {
+        console.log(summary);
         return winnerScoringRecursive(summary, kmerMap, kmerObject);
     });
 }
@@ -688,13 +689,17 @@ var KmerFinderServer = (function (_KmerJS) {
         _classCallCheck(this, KmerFinderServer);
 
         _get(Object.getPrototypeOf(KmerFinderServer.prototype), 'constructor', this).call(this, fastq, preffix, length, step, coverage, progress, 'node');
-        this.db = {
-            connection: _mongoose2['default'].connect(url, {
-                server: { socketOptions: { keepAlive: 120 } },
-                replset: { socketOptions: { keepAlive: 120 } }
-            }),
-            type: db
-        };
+        this.conn = _mongoose2['default'].createConnection(url, {
+            server: { socketOptions: { keepAlive: 120 } },
+            replset: { socketOptions: { keepAlive: 120 } }
+        });
+        // this.db = {
+        //     connection: mongoose.createConnection(url, {
+        //         server: { socketOptions: {keepAlive: 120}},
+        //         replset: { socketOptions: {keepAlive: 120}}
+        //     }),
+        //     type: db
+        // };
         this.method = method;
         this.collection = collection;
         this.firstMatches = new Map();
@@ -735,7 +740,7 @@ var KmerFinderServer = (function (_KmerJS) {
     }, {
         key: 'close',
         value: function close() {
-            this.db.connection.disconnect();
+            this.conn.close();
         }
     }]);
 

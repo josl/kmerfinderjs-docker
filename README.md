@@ -63,9 +63,6 @@ docker-machine start default
 # Reset Docker env (Used to run docker containers from different terminals)
 eval "$(docker-machine env default)"
 
-# Build cgetools Docker image
-docker build -t cgetools .
-
 # Docker Cleanup
 # Stop and remove all containers (instances of images)
 docker rm $(docker stop $(docker ps -aq))

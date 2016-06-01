@@ -24,8 +24,12 @@
 
     </div>
         <div ng-repeat="f in isolateFiles">
-            <div class="text-center">
-                Reading {{f.lines}} lines... ({{f.kmers}} kmers found so far)
+            <div class="text-center" ng-show="f.lines">
+                Reading
+                    <strong ng-class="{parsing: f.dataRead < 100, parsed: f.dataRead >= 100}">
+                        {{f.name}}
+                    </strong>
+                <div>({{f.lines}} lines / {{f.kmers}} kmers)</div>
                 <div class="progress">
                     <div class="progress-bar" style="width: {{f.dataRead}}%;"></div>
                 </div>
