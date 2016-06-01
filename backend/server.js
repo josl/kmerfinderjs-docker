@@ -31,8 +31,6 @@ app.post('/kmers', textParser, function (req, res) {
         return res.sendStatus(400);
     }
     console.log('new request!', req.body);
-    var collection = 'complete_genomes_4';
-    var dbName = 'Kmers';
     req.setEncoding('utf8');
     var kmers = '';
     req.on('data', function (chunk) {
