@@ -29,9 +29,27 @@ app.get('/', function (req, res) {
     res.send('Hello World!');
 });
 
+function waitForMatches(matches, kmerObj, socket){
+    matches.event
+        .on('winner', function (winner) {
+            console.log('New inner');
+            socket.emit('newMatch', kmerJS.mapToJSON(winner));
+        });
+
+    matches.promise
+        .then(function () {
+            kmerObj.close();
+            socket.emit('lastMatch');
+        })
+        .catch(function (err) {
+            kmerObj.close();
+            console.log('Server: ', err.message);
+            socket.emit('error', { error: err.message});
+        });
+}
+
 io.on('connection', function (socket) {
     socket.on('kmerQuery', function (kmerQuery) {
-        console.log(kmerQuery);
         var query = kmerJS.jsonToStrMap(kmerQuery);
         console.log(query.get('db'), query.get('collection'));
         var kmerObj = new kmerFinder.KmerFinderServer(
@@ -43,25 +61,9 @@ io.on('connection', function (socket) {
         query.delete('db');
         query.delete('collection');
         var matches = kmerObj.findMatches(query);
-        var answers = 0;
         console.log('sending confirmation!');
         socket.emit('queryReceived');
-        matches.event
-            .on('winner', function (winner) {
-                console.log(winner);
-                kmerJS.mapToJSON(winner);
-            });
-
-        matches.promise
-            .then(function () {
-                kmerObj.close();
-                socket.emit('lastMatch');
-            })
-            .catch(function (err) {
-                kmerObj.close();
-                console.log('Server: ', err.message);
-                socket.emit('error', { error: err.message});
-            });
+        waitForMatches(matches, kmerObj, socket);
     });
 });
 

@@ -208,7 +208,8 @@ var KmerJS = (function () {
                     kmerObj.bytesRead += chunk.length;
                     kmerObj.linesPerChunk += lines.length;
                     if (kmerObj.env === 'browser') {
-                        kmerObj.fileDataRead += kmerObj.lines * kmerObj.bytesRead / kmerObj.linesPerChunk;
+                        kmerObj.fileDataRead += chunk.length;
+                        // kmerObj.fileDataRead += (kmerObj.lines * kmerObj.bytesRead) / kmerObj.linesPerChunk;
                         eventEmmitter.emit('progress');
                     }
                     this._lastLineData = lines.splice(lines.length - 1, 1)[0];
