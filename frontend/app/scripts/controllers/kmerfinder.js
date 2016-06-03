@@ -44,12 +44,15 @@ angular.module('cgeUploaderApp')
                                 $scope.message.text = 'Query recevied! Calculating matches...';
                                 $scope.message.status = 1;
                                 console.log('queryReceived');
+                                $scope.$apply();
                             });
                             matches.event.on('newMatch', function (match) {
-                                console.log(match);
-                                file.species = match.species;
-                                file.match = true;
-                                file.matchesGrid.data.append(match);
+                                console.log('newMatch');
+                                if (file.matchesGrid.data.length === 0){
+                                    file.species = match.species;
+                                    file.match = true;
+                                }
+                                file.matchesGrid.data.push(match);
                                 $scope.$apply();
                             });
                             return matches.promise;
@@ -58,6 +61,9 @@ angular.module('cgeUploaderApp')
                             // TODO: Chech status code
                             // ans.toJSON()
                             console.log('We are done here!!', response);
+                            $scope.message.text = 'All matches recevied!';
+                            $scope.message.status = 3;
+                            $scope.$apply();
                             // var data = '';
                             // response
                             //     .on('data', function(chunk) {

@@ -66,7 +66,35 @@ var kmerMapSchema = new Schema({
     kmer: String,
     templates: Array
 });
-
+/**
+ * [extractKmers
+     db.genomes.aggregate([
+      {$match: {}},
+      {$unwind: '$reads'},
+      {$group: {
+          _id: {read: '$reads'},
+          templates: {
+            $push: {
+              sequence: '$sequence',
+              lengths: '$lengths',
+              ulengths: '$ulenght',
+              species: '$species'
+            }
+          }
+        }
+      },
+      {$project: {
+          _id: 0, kmer: '$_id.read', templates: '$templates'
+        }
+      },
+      {$out: 'KmerBacteria'}
+    ], {
+      allowDiskUse: true
+    })
+ * ]
+ * @param  {[type]} kmerObject [description]
+ * @return {[type]}            [description]
+ */
 function extractKmers(kmerObject) {
     return kmerObject.conn.model('Bacteria', kmerMapSchema, 'Bacteria').aggregate([{
         $match: {}

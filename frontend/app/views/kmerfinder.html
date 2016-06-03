@@ -14,20 +14,23 @@
         </h4>
     </div> -->
     <div ng-show="isolateFiles.length !== 0" class="well well-lg">
-        <!-- <p class="text-center"> -->
-            <button id="submitButton" ng-click="analize()" type="button" class="text-center btn btn-material-indigo-500 btn-lg btn-block">
-                Predict Species
-            </button>
-        <!-- </p> -->
-    <div class="text-center">
-        <span ng-show="message.status !== 0"
-              class="label"
-              ng-class="{'label-danger': message.status === 2, 'label-success': message.status === 1}"
-        >
-            {{message.text}}
-        </span>
+        <div class="row">
+            <div class="col-xs-6">
+                <button id="submitButton" ng-click="analize()" type="button" class="text-center btn btn-material-indigo-500 btn-lg">
+                    Predict Species
+                </button>
+            </div>
+            <div class="col-xs-6">
+                <p ng-show="message.status !== 0" class="text-center"
+                  ng-class="{
+                      'alert alert-danger': message.status === 2,
+                      'alert alert-info': message.status === 1,
+                      'alert alert-success': message.status === 3}">
+                    {{message.text}}
+                </p>
+            </div>
+        </div>
 
-    </div>
         <div ng-repeat="f in isolateFiles">
             <div class="text-center" ng-show="f.lines">
                 Reading
