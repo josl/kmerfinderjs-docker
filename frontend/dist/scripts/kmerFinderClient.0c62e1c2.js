@@ -309,6 +309,10 @@ var KmerFinderClient = (function (_KmerJS) {
                     that.socket.on('newMatch', function (match) {
                         eventEmmitter.emit('newMatch', match);
                     });
+                    that.socket.on('queryReceived', function () {
+                        console.log('queryReceived');
+                        eventEmmitter.emit('queryReceived');
+                    });
                     that.socket.on('error', function (error) {
                         reject(error);
                     });
