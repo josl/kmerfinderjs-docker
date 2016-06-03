@@ -64,25 +64,9 @@ angular.module('cgeUploaderApp')
                             $scope.message.text = 'All matches recevied!';
                             $scope.message.status = 3;
                             $scope.$apply();
-                            // var data = '';
-                            // response
-                            //     .on('data', function(chunk) {
-                            //         // compressed data as it is received
-                            //         console.log('received ' + data.length + ' bytes of compressed data');
-                            //         data += chunk;
-                            //     })
-                            //     .on('end', function () {
-                            //         var arrayMatches = JSON.parse(data);
-                            //         console.log(arrayMatches);
-                            //         console.log(file);
-                            //         file.species = arrayMatches[0].species;
-                            //         file.match = true;
-                            //         file.matchesGrid.data = arrayMatches;
-                            //         $scope.$apply();
-                            //     });
                         })
                         .catch(function (error) {
-                            console.log(error);
+                            console.log('ERROR!!', error);
                             $scope.message.text = error;
                             $scope.message.status = 2;
                             $scope.$apply();
