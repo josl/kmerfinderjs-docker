@@ -6,7 +6,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'd
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-var _libKmerFinderServer = require('../dist/kmerFinderServer');
+var _kmerFinderServer = require('./kmerFinderServer');
 
 var _console = require('console');
 
@@ -28,9 +28,10 @@ cli.parse({
 });
 
 cli.main(function (args, options) {
-    var kmerjs = new _libKmerFinderServer.KmerFinderServer(options.fastq, options.preffix, options.length, options.step, options.coverage, options.output, 'mongo', options.url, options.database, options.score);
+    var kmerjs = new _kmerFinderServer.KmerFinderServer(options.fastq, options.preffix, options.length, options.step, options.coverage, options.output, 'mongo', options.url, options.database, options.score);
     if (options.program === 'findKmers') {
-        kmerjs.findKmers().then(function (kmerMap) {
+        var kmers = kmerjs.findKmers();
+        kmers.then(function (kmerMap) {
             var keys = [].concat(_toConsumableArray(kmerMap.keys()));
             _console2['default'].log('\n' + 'Unique Kmers: ', keys.length);
             _console2['default'].log('Let\'s look at the top 10');
@@ -79,21 +80,26 @@ cli.main(function (args, options) {
         kmerjs.findKmers().then(function (kmerMap) {
             var keys = [].concat(_toConsumableArray(kmerMap.keys()));
             _console2['default'].log('Kmers: ', keys.length);
-            kmerjs.findMatches(kmerMap).then(function (output) {
-                // Console.log('Template\tScore\tExpected\tz\tp_value\tquery\tcoverage [%]\ttemplate coverage [%]\tdepth\tKmers in Template\tDescription');
-                // output.forEach(function (data) {
-                //     let seq = data.get('template');
-                //     let score = data.get('score');
-                //     let expec = data.get('expected');
-                //     let z = data.get('z');
-                //     let p = data.get('probability');
-                //     let fracQ = data.get('frac-q');
-                //     let fracD = data.get('frac-d');
-                //     let cov = data.get('depth');
-                //     let ulen = data.get('kmers-template');
-                //     let spec = data.get('species');
-                //     Console.log(`${seq}\t${score}\t${expec}\t${z}\t${p}\t${fracQ}\t${fracD}\t${cov}\t${ulen}\t${spec}\t`);
-                // });
+            var matches = kmerjs.findMatches(kmerMap);
+            matches.event.on('winner', function (winner) {
+                var seq = winner.get('template');
+                var score = winner.get('score');
+                var expec = winner.get('expected');
+                var z = winner.get('z');
+                var p = winner.get('probability');
+                var fracQ = winner.get('frac-q');
+                var fracD = winner.get('frac-d');
+                var cov = winner.get('depth');
+                var ulen = winner.get('kmers-template');
+                var spec = winner.get('species');
+                var out = seq + '\t' + score + '\t' + expec + '\t' + z + '\t' + p + '\t' + fracQ + '\t' + fracD + '\t' + cov + '\t' + ulen + '\t' + spec + '\n';
+                process.stdout.write(out);
+            });
+            matches.promise.then(function () {
+                kmerjs.close();
+                process.exit();
+            })['catch'](function (err) {
+                console.log(err);
                 kmerjs.close();
                 process.exit();
             });

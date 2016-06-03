@@ -314,6 +314,7 @@ var KmerFinderClient = (function (_KmerJS) {
                         eventEmmitter.emit('queryReceived');
                     });
                     that.socket.on('error', function (error) {
+                        console.log('error in client!');
                         reject(error);
                     });
                 }
