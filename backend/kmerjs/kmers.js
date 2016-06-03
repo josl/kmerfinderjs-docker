@@ -248,7 +248,7 @@ var KmerJS = (function () {
                         lines += 1;
                         kmerObj.lines = lines;
                         if (kmerObj.env === 'node' && kmerObj.progress) {
-                            var progress = 'Lines: ' + lines + ' /Kmers: ' + kmerObj.kmerMap.size + '\r';
+                            var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMap.size + '\r';
                             process.stdout.write(progress);
                         }
                     }

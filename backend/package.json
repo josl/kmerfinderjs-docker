@@ -29,6 +29,7 @@
     "mongoose": "",
     "readline2": "",
     "request": "",
-    "resolve": ""
+    "resolve": "",
+    "socket.io": ""
   }
 }

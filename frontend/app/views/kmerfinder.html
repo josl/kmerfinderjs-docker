@@ -20,7 +20,12 @@
             </button>
         <!-- </p> -->
     <div class="text-center">
-        <span ng-show="error" class="label label-danger ">{{errorMessage}}</span>
+        <span ng-show="message.status !== 0"
+              class="label"
+              ng-class="{'label-danger': message.status === 2, 'label-success': message.status === 1}"
+        >
+            {{message.text}}
+        </span>
 
     </div>
         <div ng-repeat="f in isolateFiles">
