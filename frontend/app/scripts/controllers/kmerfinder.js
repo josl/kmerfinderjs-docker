@@ -43,7 +43,7 @@ angular.module('cgeUploaderApp')
                             matches.event.on('queryReceived', function () {
                                 $scope.message.text = 'Query recevied! Calculating matches...';
                                 $scope.message.status = 1;
-                                console.log(queryReceived);
+                                console.log('queryReceived');
                             });
                             matches.event.on('newMatch', function (match) {
                                 console.log(match);

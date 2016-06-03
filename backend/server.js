@@ -44,6 +44,7 @@ io.on('connection', function (socket) {
         query.delete('collection');
         var matches = kmerObj.findMatches(query);
         var answers = 0;
+        console.log('sending confirmation!');
         socket.emit('queryReceived');
         matches.event
             .on('winner', function (winner) {
@@ -53,7 +54,7 @@ io.on('connection', function (socket) {
 
         matches.promise
             .then(function () {
-                kmerjs.close();
+                kmerObj.close();
                 socket.emit('lastMatch');
             })
             .catch(function (err) {
