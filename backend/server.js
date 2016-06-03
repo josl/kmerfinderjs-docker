@@ -42,11 +42,12 @@ io.on('connection', function (socket) {
         );
         query.delete('db');
         query.delete('collection');
-        var matches = kmerObj.findMatches(kmerMap);
+        var matches = kmerObj.findMatches(query);
         var answers = 0;
         socket.emit('queryReceived');
         matches.event
             .on('winner', function (winner) {
+                console.log(winner);
                 kmerJS.mapToJSON(winner);
             });
 
