@@ -1,24 +1,13 @@
-/* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush", "emit"] }] */
-// let fs = require('browserify-fs');
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.KmerFinderServer = undefined;
 
-var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-var _get = function get(_x12, _x13, _x14) { var _again = true; _function: while (_again) { var object = _x12, property = _x13, receiver = _x14; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x12 = parent; _x13 = property; _x14 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
 var _console = require('console');
 
@@ -30,23 +19,36 @@ var _lodash2 = _interopRequireDefault(_lodash);
 
 var _stats = require('./stats');
 
-var _bignumberJs = require('bignumber.js');
+var _bignumber = require('bignumber.js');
 
-var _bignumberJs2 = _interopRequireDefault(_bignumberJs);
+var _bignumber2 = _interopRequireDefault(_bignumber);
 
 var _mongoose = require('mongoose');
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 
-var _kmersJs = require('./kmers.js');
+var _kmers = require('./kmers.js');
 
 var _events = require('events');
 
 var _events2 = _interopRequireDefault(_events);
 
-_bignumberJs2['default'].config({ ROUNDING_MODE: 2 });
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var Schema = _mongoose2['default'].Schema;
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } } /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush", "emit"] }] */
+// let fs = require('browserify-fs');
+
+
+_bignumber2.default.config({ ROUNDING_MODE: 2 });
+
+
+var Schema = _mongoose2.default.Schema;
 
 var kmerSchema = new Schema({
     lengths: Number,
@@ -135,7 +137,7 @@ function createSummary(kmerObject) {
 function findMatchesMapReduce(kmerMap, url, collection) {
     kmerMapSchema.index({ kmer: 1 });
     kmerMapSchema.index({ sequence: 1 });
-    var kmerDB = _mongoose2['default'].model(collection, kmerSchema, collection);
+    var kmerDB = _mongoose2.default.model(collection, kmerSchema, collection);
     var mapReduce = {};
     mapReduce.map = 'function () {\n        var matches = 0;\n        for (var i = 0; i < kmerQuery.length; i++) {\n            if (this.reads.indexOf(kmerQuery[i]) !== -1) {\n                matches += 1;\n            }\n        }\n        emit(\'test\', matches);\n    }';
     mapReduce.reduce = 'function (key, values) {\n            return Array.sum(values);\n    }';
@@ -171,7 +173,7 @@ function findKmersMatches(kmerMap, conn, collection) {
         unwind('templates') // FIXME: Look into not unwind & postprocess in client
         .group({ // Apparently is faster than the alternative...
             _id: { template: '$templates' },
-            filteredReads: {
+            filteredKmers: {
                 $push: '$kmer'
             }
         }).project({
@@ -180,7 +182,7 @@ function findKmersMatches(kmerMap, conn, collection) {
             lengths: '$_id.template.lengths',
             ulengths: '$_id.template.ulengths',
             species: '$_id.template.species',
-            filteredReads: '$filteredReads'
+            filteredKmers: '$filteredKmers'
         }).allowDiskUse(true).cursor({ batchSize: 3000 }).exec();
 
         cursor.toArray(function (err, hits) {
@@ -218,11 +220,11 @@ function findKmersMatches(kmerMap, conn, collection) {
             var _iteratorError = undefined;
 
             try {
-                var _loop = function () {
+                var _loop = function _loop() {
                     var hit = _step.value;
 
-                    nHits += hit.filteredReads.length;
-                    hit.filteredReads.forEach(function (read) {
+                    nHits += hit.filteredKmers.length;
+                    hit.filteredKmers.forEach(function (read) {
                         var template = templates.get(hit.template);
                         var kmerCoverage = kmerMap.get(read);
                         if (template !== undefined) {
@@ -235,7 +237,7 @@ function findKmersMatches(kmerMap, conn, collection) {
                                 lengths: hit.lengths,
                                 ulength: hit.ulengths,
                                 species: hit.species,
-                                reads: new Set(hit.filteredReads)
+                                kmers: new Set(hit.filteredKmers)
                             });
                         }
                     });
@@ -249,8 +251,8 @@ function findKmersMatches(kmerMap, conn, collection) {
                 _iteratorError = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion && _iterator['return']) {
-                        _iterator['return']();
+                    if (!_iteratorNormalCompletion && _iterator.return) {
+                        _iterator.return();
                     }
                 } finally {
                     if (_didIteratorError) {
@@ -273,7 +275,7 @@ function findKmersMatches(kmerMap, conn, collection) {
 function findMatchesMongoAggregation(kmerMap, url, collection, progress) {
     kmerSchema.index({ reads: 1 });
     kmerSchema.index({ sequence: 1 });
-    var kmerDB = _mongoose2['default'].model(collection, kmerSchema, collection);
+    var kmerDB = _mongoose2.default.model(collection, kmerSchema, collection);
     var kmerQuery = [].concat(_toConsumableArray(kmerMap.keys()));
 
     return kmerDB.aggregate([{
@@ -295,7 +297,7 @@ function findMatchesMongoAggregation(kmerMap, url, collection, progress) {
                                 "$literal": ["single_element"]
                             },
                             as: "el",
-                            'in': "$$read"
+                            in: "$$read"
                         }
                     }, kmerQuery]
                 }
@@ -309,7 +311,7 @@ function findMatchesMongoAggregation(kmerMap, url, collection, progress) {
         var _iteratorError2 = undefined;
 
         try {
-            var _loop2 = function () {
+            var _loop2 = function _loop2() {
                 var hit = _step2.value;
 
                 nHits += hit.filteredReads.length;
@@ -340,8 +342,8 @@ function findMatchesMongoAggregation(kmerMap, url, collection, progress) {
             _iteratorError2 = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-                    _iterator2['return']();
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                    _iterator2.return();
                 }
             } finally {
                 if (_didIteratorError2) {
@@ -376,7 +378,7 @@ function findMatchesMongo(kmerMap, url, collection) {
 
     kmerSchema.index({ reads: 1 });
     kmerSchema.index({ sequence: 1 });
-    var kmerDB = _mongoose2['default'].model(collection, kmerSchema, collection);
+    var kmerDB = _mongoose2.default.model(collection, kmerSchema, collection);
     var query = {
         reads: {
             // The $in operator selects the documents where the value of a field
@@ -386,14 +388,14 @@ function findMatchesMongo(kmerMap, url, collection) {
     };
     // Get unique and total matches
     var templates = new Map();
-    var hits = undefined;
+    var hits = void 0;
     // Query to return matched templates
     var cursor = kmerDB.aggregate([{ $match: query }]);
     return cursor.unwind('reads').match(query).group({
         _id: { sequence: '$sequence', read: '$reads' },
         uScore: { $sum: 1 }
     }).exec().then(function (matches) {
-        hits = _lodash2['default'].reduce(matches, function (total, n) {
+        hits = _lodash2.default.reduce(matches, function (total, n) {
             return total + n.uScore;
         }, 0);
         console.log('Hits found: ', hits);
@@ -423,8 +425,8 @@ function findMatchesMongo(kmerMap, url, collection) {
                 _iteratorError3 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion3 && _iterator3['return']) {
-                        _iterator3['return']();
+                    if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                        _iterator3.return();
                     }
                 } finally {
                     if (_didIteratorError3) {
@@ -466,8 +468,8 @@ function findMatchesMongo(kmerMap, url, collection) {
             _iteratorError4 = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion4 && _iterator4['return']) {
-                    _iterator4['return']();
+                if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                    _iterator4.return();
                 }
             } finally {
                 if (_didIteratorError4) {
@@ -490,7 +492,7 @@ function findMatchesMongo(kmerMap, url, collection) {
 function findKmersTemplate(template, collection) {
     // let kmerDB = mongoose.model(collection, kmerMapSchema, collection);
     // return kmerDB.find({'templates.sequence': template}).exec();
-    var kmerDB = _mongoose2['default'].model(collection, kmerSchema, collection);
+    var kmerDB = _mongoose2.default.model(collection, kmerSchema, collection);
     return kmerDB.findOne({ sequence: template }, { reads: 1 }).exec();
 }
 
@@ -505,18 +507,22 @@ function findKmersTemplate(template, collection) {
  */
 function matchSummary(kmerObject, sequence, match, results, summary) {
     var minScore = 0;
+    var kmerQuerySize = kmerObject.kmerMap.size;
+    var originalUScore = kmerObject.firstMatches.get(sequence).uScore;
+    var originalTScore = kmerObject.firstMatches.get(sequence).tScore;
+    var matchUScore = match.uScore;
     if (match.uScore > minScore) {
         var z = (0, _stats.zScore)(match.uScore, match.ulength, results.hits, summary.uniqueLens);
         var probability = (0, _stats.fastp)(z).times(summary.templates);
         var allow = kmerObject.evalue.cmp(probability); // p <= evalue
         if (allow >= 0) {
-            var fracQ = new _bignumberJs2['default'](100).times(2).times(match.uScore).dividedBy(new _bignumberJs2['default'](kmerObject.kmerMap.size).plus(_stats.etta));
-            var fracD = new _bignumberJs2['default'](100).times(match.uScore).dividedBy(new _bignumberJs2['default'](match.ulength).plus(_stats.etta));
-            var totFracQ = new _bignumberJs2['default'](100).times(2).times(kmerObject.firstMatches.get(sequence).uScore).dividedBy(new _bignumberJs2['default'](kmerObject.kmerMap.size).plus(_stats.etta));
-            var totFracD = new _bignumberJs2['default'](100).times(kmerObject.firstMatches.get(sequence).uScore).dividedBy(new _bignumberJs2['default'](match.ulength).plus(_stats.etta));
-            var totFracCov = new _bignumberJs2['default'](kmerObject.firstMatches.get(sequence).tScore).dividedBy(match.lengths).round(2).toNumber();
-            var expected = new _bignumberJs2['default'](results.hits).times(match.ulength).dividedBy(summary.uniqueLens);
-            return new Map([['template', sequence], ['score', match.uScore], ['expected', expected.round(0, 1).toNumber()], ['z', z.round(2).toNumber()], ['probability', probability.toNumber()], ['frac-q', fracQ.round(2, 2).toNumber()], ['frac-d', fracD.round(2).toNumber()], ['depth', new _bignumberJs2['default'](match.tScore).dividedBy(match.lengths).round(2).toNumber()], ['kmers-template', match.ulength], ['total-frac-q', totFracQ.round(2, 2).toNumber()], ['total-frac-d', totFracD.round(2).toNumber()], ['total-temp-cover', totFracCov], ['species', match.species]]);
+            var fracQ = new _bignumber2.default(100).times(2).times(matchUScore).dividedBy(new _bignumber2.default(kmerQuerySize).plus(_stats.etta));
+            var fracD = new _bignumber2.default(100).times(matchUScore).dividedBy(new _bignumber2.default(match.ulength).plus(_stats.etta));
+            var totFracQ = new _bignumber2.default(100).times(2).times(originalUScore).dividedBy(new _bignumber2.default(kmerQuerySize).plus(_stats.etta));
+            var totFracD = new _bignumber2.default(100).times(originalUScore).dividedBy(new _bignumber2.default(match.ulength).plus(_stats.etta));
+            var totFracCov = new _bignumber2.default(originalTScore).dividedBy(match.lengths).round(2, 6).toNumber();
+            var expected = new _bignumber2.default(results.hits).times(match.ulength).dividedBy(summary.uniqueLens);
+            return new Map([['template', sequence], ['score', matchUScore], ['expected', expected.round(0, 6).toNumber()], ['z', z.round(2).toNumber()], ['probability', probability.toNumber()], ['frac-q', fracQ.round(2, 6).toNumber()], ['frac-d', fracD.round(2, 6).toNumber()], ['depth', new _bignumber2.default(match.tScore).dividedBy(match.lengths).round(2, 6).toNumber()], ['kmers-template', match.ulength], ['total-frac-q', totFracQ.round(2, 6).toNumber()], ['total-frac-d', totFracD.round(2, 6).toNumber()], ['total-temp-cover', totFracCov], ['species', match.species]]);
         }
     }
 }
@@ -564,7 +570,7 @@ function winnerScoring(kmerObject, kmerMap) {
     var hitCounter = 0;
     var notFound = true;
     var kmerResults = [];
-    var eventEmmitter = new _events2['default'].EventEmitter();
+    var eventEmmitter = new _events2.default.EventEmitter();
     var firstMatch = kmerObject.conn.model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }, { _id: 0 }).then(function (summary) {
         kmerObject.summary = summary;
         return findKmersMatches(kmerMap, kmerObject.conn, kmerObject.collection, kmerObject.progress);
@@ -579,24 +585,26 @@ function winnerScoring(kmerObject, kmerMap) {
                 process.stdout.write(out);
             }
         }
-        var winner = matchSummary(kmerObject, templates[0][0], templates[0][1], results, kmerObject.summary);
+        var sequence = templates[0][0];
+        var match = templates[0][1];
+        var winner = matchSummary(kmerObject, sequence, match, results, kmerObject.summary);
 
         // Winner is undefined if match's score < minScore
         if (winner && kmerObject.evalue.cmp(winner.get('probability')) >= 0) {
             hitCounter += 1;
             kmerResults.push(winner);
             eventEmmitter.emit('winner', winner);
-            return results.templates.get(winner.get('template')).reads;
+            return match.kmers;
         } else {
             return;
         }
     }
 
-    function removeWinnerKmers(matchReads) {
-        if (matchReads) {
+    function removeWinnerKmers(matchKmers) {
+        if (matchKmers) {
             // remove all kmers in best hit from kmerMap
-            matchReads.forEach(function (kmer) {
-                kmerMap['delete'](kmer);
+            matchKmers.forEach(function (kmer) {
+                kmerMap.delete(kmer);
             });
             return;
         } else {
@@ -610,35 +618,57 @@ function winnerScoring(kmerObject, kmerMap) {
         var nHits = 0;
 
         kmerObject.firstMatches.forEach(function (hit, sequence) {
-            kmerQueryMap.forEach(function (coverage, queryKmer) {
-                // filter query kmers that are in the template kmers
-                if (hit.reads.has(queryKmer)) {
-                    var template = templates.get(sequence);
-                    var kmerCoverage = kmerQueryMap.get(queryKmer);
-                    if (template !== undefined) {
-                        template.tScore += kmerCoverage;
-                        template.uScore += 1;
-                        template.reads.add(queryKmer);
-                    } else {
-                        templates.set(sequence, {
-                            tScore: kmerCoverage,
-                            uScore: 1,
-                            lengths: hit.lengths,
-                            ulength: hit.ulength,
-                            species: hit.species,
-                            reads: new Set()
-                        });
+            var template = templates.get(sequence);
+            var _iteratorNormalCompletion5 = true;
+            var _didIteratorError5 = false;
+            var _iteratorError5 = undefined;
+
+            try {
+                for (var _iterator5 = hit.kmers[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                    var kmer = _step5.value;
+
+                    if (kmerQueryMap.has(kmer)) {
+                        var kmerCoverage = kmerQueryMap.get(kmer);
+                        if (template !== undefined) {
+                            template.tScore += kmerCoverage;
+                            template.uScore += 1;
+                            template.kmers.add(kmer);
+                        } else {
+                            templates.set(sequence, {
+                                tScore: kmerCoverage,
+                                uScore: 1,
+                                lengths: hit.lengths,
+                                ulength: hit.ulength,
+                                species: hit.species,
+                                kmers: new Set([kmer])
+                            });
+                            template = templates.get(sequence);
+                        }
                     }
                 }
-            });
-            if (templates.has(sequence)) {
-                nHits += templates.get(sequence).reads.size;
+            } catch (err) {
+                _didIteratorError5 = true;
+                _iteratorError5 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                        _iterator5.return();
+                    }
+                } finally {
+                    if (_didIteratorError5) {
+                        throw _iteratorError5;
+                    }
+                }
+            }
+
+            if (template !== undefined) {
+                nHits += template.kmers.size;
             } else {
-                kmerObject.firstMatches['delete'](sequence);
+                kmerObject.firstMatches.delete(sequence);
             }
         });
         if (nHits === 0) {
-            throw new Error('No hits were found!');
+            throw new Error('No hits were found! (nHits === 0)');
         }
         return {
             templates: templates,
@@ -647,27 +677,18 @@ function winnerScoring(kmerObject, kmerMap) {
     }
 
     var loop = function loop() {
-        var _again2 = true;
-
-        _function2: while (_again2) {
-            _again2 = false;
-
-            if (!(notFound && hitCounter < kmerObject.maxHits)) {
-                if (kmerResults.length === 0) {
-                    throw new Error('No hits were found!');
-                }
-                console.log('exiting...');
-                return;
-                // return kmerResults.sort(sortKmerResults);
-            } else {
-                    // Find new matches from first matches.
-                    var results = getMatches(kmerObject, kmerMap);
-                    var winnerKmers = findWinner(results);
-                    removeWinnerKmers(winnerKmers);
-                    _again2 = true;
-                    results = winnerKmers = undefined;
-                    continue _function2;
-                }
+        if (!(notFound && hitCounter < kmerObject.maxHits)) {
+            if (kmerResults.length === 0) {
+                throw new Error('No hits were found! (kmerResults.length === 0)');
+            }
+            console.log('exiting...');
+            return;
+        } else {
+            // Find new matches from first matches.
+            var results = getMatches(kmerObject, kmerMap);
+            var winnerKmers = findWinner(results);
+            removeWinnerKmers(winnerKmers);
+            return loop();
         }
     };
 
@@ -685,37 +706,37 @@ function winnerScoring(kmerObject, kmerMap) {
  */
 function standardScoring(kmerObject, kmerMap) {
     var kmerResults = [];
-    return Promise.all([_mongoose2['default'].model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }, { _id: 0 }).exec(), findMatchesMongoAggregation(kmerMap, kmerObject.db.url, kmerObject.collection, kmerObject.progress)]).then(function (_ref) {
+    return Promise.all([_mongoose2.default.model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }, { _id: 0 }).exec(), findMatchesMongoAggregation(kmerMap, kmerObject.db.url, kmerObject.collection, kmerObject.progress)]).then(function (_ref) {
         var _ref2 = _slicedToArray(_ref, 2);
 
         var summary = _ref2[0];
         var results = _ref2[1];
 
         kmerObject.firstMatches = results.templates;
-        var _iteratorNormalCompletion5 = true;
-        var _didIteratorError5 = false;
-        var _iteratorError5 = undefined;
+        var _iteratorNormalCompletion6 = true;
+        var _didIteratorError6 = false;
+        var _iteratorError6 = undefined;
 
         try {
-            for (var _iterator5 = results.templates[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                var _step5$value = _slicedToArray(_step5.value, 2);
+            for (var _iterator6 = results.templates[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                var _step6$value = _slicedToArray(_step6.value, 2);
 
-                var sequence = _step5$value[0];
-                var match = _step5$value[1];
+                var sequence = _step6$value[0];
+                var match = _step6$value[1];
 
                 kmerResults.push(matchSummary(kmerObject, sequence, match, results, summary));
             }
         } catch (err) {
-            _didIteratorError5 = true;
-            _iteratorError5 = err;
+            _didIteratorError6 = true;
+            _iteratorError6 = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion5 && _iterator5['return']) {
-                    _iterator5['return']();
+                if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                    _iterator6.return();
                 }
             } finally {
-                if (_didIteratorError5) {
-                    throw _iteratorError5;
+                if (_didIteratorError6) {
+                    throw _iteratorError6;
                 }
             }
         }
@@ -724,7 +745,7 @@ function standardScoring(kmerObject, kmerMap) {
     });
 }
 
-var KmerFinderServer = (function (_KmerJS) {
+var KmerFinderServer = exports.KmerFinderServer = function (_KmerJS) {
     _inherits(KmerFinderServer, _KmerJS);
 
     /**
@@ -756,33 +777,35 @@ var KmerFinderServer = (function (_KmerJS) {
 
         _classCallCheck(this, KmerFinderServer);
 
-        _get(Object.getPrototypeOf(KmerFinderServer.prototype), 'constructor', this).call(this, fastq, preffix, length, step, coverage, progress, 'node');
-        this.conn = _mongoose2['default'].createConnection(url, {
+        var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(KmerFinderServer).call(this, fastq, preffix, length, step, coverage, progress, 'node'));
+
+        _this.conn = _mongoose2.default.createConnection(url, {
             server: { socketOptions: { keepAlive: 120 } },
             replset: { socketOptions: { keepAlive: 120 } }
         });
-        this.method = method;
-        this.collection = collection;
-        this.firstMatches = new Map();
-        this.maxHits = maxHits;
+        _this.method = method;
+        _this.collection = collection;
+        _this.firstMatches = new Map();
+        _this.maxHits = maxHits;
+        return _this;
     }
-
     /**
      * [findKmers Wrapper around reading file function]
      * @return {[Map]} [Kmer Map]
      */
+
 
     _createClass(KmerFinderServer, [{
         key: 'findKmers',
         value: function findKmers() {
             return this.readFile().promise;
         }
-
         /**
          * [findMatches description]
          * @param  {[Map]}     kmerMap [Kmer Map]
          * @return {[Promise]}         [description]
          */
+
     }, {
         key: 'findMatches',
         value: function findMatches(kmerMap) {
@@ -807,6 +830,4 @@ var KmerFinderServer = (function (_KmerJS) {
     }]);
 
     return KmerFinderServer;
-})(_kmersJs.KmerJS);
-
-exports.KmerFinderServer = KmerFinderServer;
+}(_kmers.KmerJS);

@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 var express = require('express');
 var kmerFinder = require('./kmerjs/kmerFinderServer.js');
 var kmerJS = require('./kmerjs/kmers.js');

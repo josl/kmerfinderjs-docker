@@ -1,14 +1,23 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.kmerModule = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (process){
-/* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
-
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.KmerJS = exports.complementMap = undefined;
 
-var _slicedToArray = (function () {
+var _createClass = function () {
+    function defineProperties(target, props) {
+        for (var i = 0; i < props.length; i++) {
+            var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
+        }
+    }return function (Constructor, protoProps, staticProps) {
+        if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
+    };
+}();
+
+var _slicedToArray = function () {
     function sliceIterator(arr, i) {
         var _arr = [];var _n = true;var _d = false;var _e = undefined;try {
             for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
@@ -18,7 +27,7 @@ var _slicedToArray = (function () {
             _d = true;_e = err;
         } finally {
             try {
-                if (!_n && _i['return']) _i['return']();
+                if (!_n && _i["return"]) _i["return"]();
             } finally {
                 if (_d) throw _e;
             }
@@ -29,20 +38,10 @@ var _slicedToArray = (function () {
         } else if (Symbol.iterator in Object(arr)) {
             return sliceIterator(arr, i);
         } else {
-            throw new TypeError('Invalid attempt to destructure non-iterable instance');
+            throw new TypeError("Invalid attempt to destructure non-iterable instance");
         }
     };
-})();
-
-var _createClass = (function () {
-    function defineProperties(target, props) {
-        for (var i = 0; i < props.length; i++) {
-            var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ('value' in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);
-        }
-    }return function (Constructor, protoProps, staticProps) {
-        if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;
-    };
-})();
+}(); /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
 
 exports.jsonToStrMap = jsonToStrMap;
 exports.complement = complement;
@@ -50,19 +49,9 @@ exports.stringToMap = stringToMap;
 exports.objectToMap = objectToMap;
 exports.mapToJSON = mapToJSON;
 
-function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : { 'default': obj };
-}
+var _bignumber = require('bignumber.js');
 
-function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-        throw new TypeError('Cannot call a class as a function');
-    }
-}
-
-var _bignumberJs = require('bignumber.js');
-
-var _bignumberJs2 = _interopRequireDefault(_bignumberJs);
+var _bignumber2 = _interopRequireDefault(_bignumber);
 
 var _console = require('console');
 
@@ -80,10 +69,19 @@ var _events = require('events');
 
 var _events2 = _interopRequireDefault(_events);
 
-var fs = require('fs');
-var complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
+function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : { default: obj };
+}
 
-exports.complementMap = complementMap;
+function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+        throw new TypeError("Cannot call a class as a function");
+    }
+}
+
+var fs = require('fs');
+var complementMap = exports.complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
+
 function objToStrMap(obj) {
     var strMap = new Map();
     var _iteratorNormalCompletion = true;
@@ -101,8 +99,8 @@ function objToStrMap(obj) {
         _iteratorError = err;
     } finally {
         try {
-            if (!_iteratorNormalCompletion && _iterator['return']) {
-                _iterator['return']();
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
             }
         } finally {
             if (_didIteratorError) {
@@ -127,11 +125,9 @@ function complement(string) {
 function stringToMap(string) {
     return objToStrMap(JSON.parse(string));
 }
-
 function objectToMap(object) {
     return objToStrMap(object);
 }
-
 function mapToJSON(strMap) {
     var obj = Object.create(null);
     var _iteratorNormalCompletion2 = true;
@@ -154,8 +150,8 @@ function mapToJSON(strMap) {
         _iteratorError2 = err;
     } finally {
         try {
-            if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-                _iterator2['return']();
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
             }
         } finally {
             if (_didIteratorError2) {
@@ -167,7 +163,7 @@ function mapToJSON(strMap) {
     return obj;
 }
 
-var KmerJS = (function () {
+var KmerJS = exports.KmerJS = function () {
     /**
      * [constructor description]
      * @param  {[type]} preffix  =             'ATGAC' [Filter kmers starting with]
@@ -196,14 +192,13 @@ var KmerJS = (function () {
         this.step = step;
         this.progress = progress;
         this.coverage = coverage;
-        this.evalue = new _bignumberJs2['default'](0.05);
+        this.evalue = new _bignumber2.default(0.05);
         this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
         this.env = env;
         if (env === 'browser') {
             this.fileDataRead = 0;
         }
     }
-
     /**
      * [kmersInLine description]
      * @param  {[string]} line [Sequence read: ATGACCTGAGAGCCTT]
@@ -225,20 +220,20 @@ var KmerJS = (function () {
                 end = ini + this.kmerLength;
             }
         }
-
         /**
          * [readFile extract Kmers from file.]
          * @return {[type]} [description]
          */
+
     }, {
         key: 'readFile',
         value: function readFile() {
             var kmerObj = this;
-            var eventEmmitter = new _events2['default'].EventEmitter();
+            var eventEmmitter = new _events2.default.EventEmitter();
             var promise = new Promise(function (resolve) {
 
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
-                var liner = new _stream2['default'].Transform({ objectMode: true });
+                var liner = new _stream2.default.Transform({ objectMode: true });
                 liner._transform = function (chunk, encoding, done) {
                     var data = chunk.toString();
                     if (this._lastLineData) {
@@ -268,7 +263,7 @@ var KmerJS = (function () {
                 if (kmerObj.env === 'node') {
                     fs.createReadStream(kmerObj.fastq).pipe(liner);
                 } else if (kmerObj.env === 'browser') {
-                    (0, _filereaderStream2['default'])(kmerObj.fastq).pipe(liner);
+                    (0, _filereaderStream2.default)(kmerObj.fastq).pipe(liner);
                 }
                 var i = 0;
                 var lines = 0;
@@ -276,7 +271,7 @@ var KmerJS = (function () {
                 kmerObj.bytesRead = 0;
                 kmerObj.linesPerChunk = 0;
                 liner.on('readable', function () {
-                    var line = undefined;
+                    var line = void 0;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
                             [line, complement(line)].forEach(function (kmerLine) {
@@ -310,22 +305,20 @@ var KmerJS = (function () {
     }]);
 
     return KmerJS;
-})();
-
-exports.KmerJS = KmerJS;
+}();
 
 }).call(this,require('_process'))
 },{"_process":34,"bignumber.js":2,"console":24,"events":27,"filereader-stream":4,"fs":19,"stream":45}],2:[function(require,module,exports){
-/*! bignumber.js v2.2.0 https://github.com/MikeMcl/bignumber.js/LICENCE */
+/*! bignumber.js v2.3.0 https://github.com/MikeMcl/bignumber.js/LICENCE */
 
 ;(function (globalObj) {
     'use strict';
 
     /*
-      bignumber.js v2.2.0
+      bignumber.js v2.3.0
       A JavaScript library for arbitrary-precision arithmetic.
       https://github.com/MikeMcl/bignumber.js
-      Copyright (c) 2015 Michael Mclaughlin <M8ch88l@gmail.com>
+      Copyright (c) 2016 Michael Mclaughlin <M8ch88l@gmail.com>
       MIT Expat Licence
     */
 
@@ -2681,50 +2674,85 @@ exports.KmerJS = KmerJS;
 
         /*
          * Return a BigNumber whose value is the value of this BigNumber raised to the power n.
+         * If m is present, return the result modulo m.
          * If n is negative round according to DECIMAL_PLACES and ROUNDING_MODE.
-         * If POW_PRECISION is not 0, round to POW_PRECISION using ROUNDING_MODE.
+         * If POW_PRECISION is non-zero and m is not present, round to POW_PRECISION using
+         * ROUNDING_MODE.
          *
-         * n {number} Integer, -9007199254740992 to 9007199254740992 inclusive.
-         * (Performs 54 loop iterations for n of 9007199254740992.)
+         * The modular power operation works efficiently when x, n, and m are positive integers,
+         * otherwise it is equivalent to calculating x.toPower(n).modulo(m) (with POW_PRECISION 0).
+         *
+         * n {number} Integer, -MAX_SAFE_INTEGER to MAX_SAFE_INTEGER inclusive.
+         * [m] {number|string|BigNumber} The modulus.
          *
          * 'pow() exponent not an integer: {n}'
          * 'pow() exponent out of range: {n}'
+         *
+         * Performs 54 loop iterations for n of 9007199254740991.
          */
-        P.toPower = P.pow = function (n) {
-            var k, y,
+        P.toPower = P.pow = function ( n, m ) {
+            var k, y, z,
                 i = mathfloor( n < 0 ? -n : +n ),
                 x = this;
+
+            if ( m != null ) {
+                id = 23;
+                m = new BigNumber(m);
+            }
 
             // Pass ±Infinity to Math.pow if exponent is out of range.
             if ( !isValidInt( n, -MAX_SAFE_INTEGER, MAX_SAFE_INTEGER, 23, 'exponent' ) &&
               ( !isFinite(n) || i > MAX_SAFE_INTEGER && ( n /= 0 ) ||
-                parseFloat(n) != n && !( n = NaN ) ) ) {
-                return new BigNumber( Math.pow( +x, n ) );
+                parseFloat(n) != n && !( n = NaN ) ) || n == 0 ) {
+                k = Math.pow( +x, n );
+                return new BigNumber( m ? k % m : k );
             }
 
-            // Truncating each coefficient array to a length of k after each multiplication equates
-            // to truncating significant digits to POW_PRECISION + [28, 41], i.e. there will be a
-            // minimum of 28 guard digits retained. (Using + 1.5 would give [9, 21] guard digits.)
-            k = POW_PRECISION ? mathceil( POW_PRECISION / LOG_BASE + 2 ) : 0;
+            if (m) {
+                if ( n > 1 && x.gt(ONE) && x.isInt() && m.gt(ONE) && m.isInt() ) {
+                    x = x.mod(m);
+                } else {
+                    z = m;
+
+                    // Nullify m so only a single mod operation is performed at the end.
+                    m = null;
+                }
+            } else if (POW_PRECISION) {
+
+                // Truncating each coefficient array to a length of k after each multiplication
+                // equates to truncating significant digits to POW_PRECISION + [28, 41],
+                // i.e. there will be a minimum of 28 guard digits retained.
+                // (Using + 1.5 would give [9, 21] guard digits.)
+                k = mathceil( POW_PRECISION / LOG_BASE + 2 );
+            }
+
             y = new BigNumber(ONE);
 
             for ( ; ; ) {
-
                 if ( i % 2 ) {
                     y = y.times(x);
                     if ( !y.c ) break;
-                    if ( k && y.c.length > k ) y.c.length = k;
+                    if (k) {
+                        if ( y.c.length > k ) y.c.length = k;
+                    } else if (m) {
+                        y = y.mod(m);
+                    }
                 }
 
                 i = mathfloor( i / 2 );
                 if ( !i ) break;
-
                 x = x.times(x);
-                if ( k && x.c && x.c.length > k ) x.c.length = k;
+                if (k) {
+                    if ( x.c && x.c.length > k ) x.c.length = k;
+                } else if (m) {
+                    x = x.mod(m);
+                }
             }
 
+            if (m) return y;
             if ( n < 0 ) y = ONE.div(y);
-            return k ? round( y, POW_PRECISION, ROUNDING_MODE ) : y;
+
+            return z ? y.mod(z) : k ? round( y, POW_PRECISION, ROUNDING_MODE ) : y;
         };
 
 

@@ -1,14 +1,13 @@
-/* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
-
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.KmerJS = exports.complementMap = undefined;
 
-var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }(); /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
 
 exports.jsonToStrMap = jsonToStrMap;
 exports.complement = complement;
@@ -16,13 +15,9 @@ exports.stringToMap = stringToMap;
 exports.objectToMap = objectToMap;
 exports.mapToJSON = mapToJSON;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _bignumber = require('bignumber.js');
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-var _bignumberJs = require('bignumber.js');
-
-var _bignumberJs2 = _interopRequireDefault(_bignumberJs);
+var _bignumber2 = _interopRequireDefault(_bignumber);
 
 var _console = require('console');
 
@@ -40,10 +35,13 @@ var _events = require('events');
 
 var _events2 = _interopRequireDefault(_events);
 
-var fs = require('fs');
-var complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-exports.complementMap = complementMap;
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var fs = require('fs');
+var complementMap = exports.complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
+
 function objToStrMap(obj) {
     var strMap = new Map();
     var _iteratorNormalCompletion = true;
@@ -61,8 +59,8 @@ function objToStrMap(obj) {
         _iteratorError = err;
     } finally {
         try {
-            if (!_iteratorNormalCompletion && _iterator['return']) {
-                _iterator['return']();
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
             }
         } finally {
             if (_didIteratorError) {
@@ -87,11 +85,9 @@ function complement(string) {
 function stringToMap(string) {
     return objToStrMap(JSON.parse(string));
 }
-
 function objectToMap(object) {
     return objToStrMap(object);
 }
-
 function mapToJSON(strMap) {
     var obj = Object.create(null);
     var _iteratorNormalCompletion2 = true;
@@ -114,8 +110,8 @@ function mapToJSON(strMap) {
         _iteratorError2 = err;
     } finally {
         try {
-            if (!_iteratorNormalCompletion2 && _iterator2['return']) {
-                _iterator2['return']();
+            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                _iterator2.return();
             }
         } finally {
             if (_didIteratorError2) {
@@ -127,7 +123,7 @@ function mapToJSON(strMap) {
     return obj;
 }
 
-var KmerJS = (function () {
+var KmerJS = exports.KmerJS = function () {
     /**
      * [constructor description]
      * @param  {[type]} preffix  =             'ATGAC' [Filter kmers starting with]
@@ -156,19 +152,19 @@ var KmerJS = (function () {
         this.step = step;
         this.progress = progress;
         this.coverage = coverage;
-        this.evalue = new _bignumberJs2['default'](0.05);
+        this.evalue = new _bignumber2.default(0.05);
         this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
         this.env = env;
         if (env === 'browser') {
             this.fileDataRead = 0;
         }
     }
-
     /**
      * [kmersInLine description]
      * @param  {[string]} line [Sequence read: ATGACCTGAGAGCCTT]
      * @return {[type]}      [description]
      */
+
 
     _createClass(KmerJS, [{
         key: 'kmersInLine',
@@ -185,20 +181,20 @@ var KmerJS = (function () {
                 end = ini + this.kmerLength;
             }
         }
-
         /**
          * [readFile extract Kmers from file.]
          * @return {[type]} [description]
          */
+
     }, {
         key: 'readFile',
         value: function readFile() {
             var kmerObj = this;
-            var eventEmmitter = new _events2['default'].EventEmitter();
+            var eventEmmitter = new _events2.default.EventEmitter();
             var promise = new Promise(function (resolve) {
 
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
-                var liner = new _stream2['default'].Transform({ objectMode: true });
+                var liner = new _stream2.default.Transform({ objectMode: true });
                 liner._transform = function (chunk, encoding, done) {
                     var data = chunk.toString();
                     if (this._lastLineData) {
@@ -228,7 +224,7 @@ var KmerJS = (function () {
                 if (kmerObj.env === 'node') {
                     fs.createReadStream(kmerObj.fastq).pipe(liner);
                 } else if (kmerObj.env === 'browser') {
-                    (0, _filereaderStream2['default'])(kmerObj.fastq).pipe(liner);
+                    (0, _filereaderStream2.default)(kmerObj.fastq).pipe(liner);
                 }
                 var i = 0;
                 var lines = 0;
@@ -236,7 +232,7 @@ var KmerJS = (function () {
                 kmerObj.bytesRead = 0;
                 kmerObj.linesPerChunk = 0;
                 liner.on('readable', function () {
-                    var line = undefined;
+                    var line = void 0;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
                             [line, complement(line)].forEach(function (kmerLine) {
@@ -270,6 +266,4 @@ var KmerJS = (function () {
     }]);
 
     return KmerJS;
-})();
-
-exports.KmerJS = KmerJS;
+}();
