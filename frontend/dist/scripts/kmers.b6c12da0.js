@@ -194,6 +194,7 @@ var KmerJS = exports.KmerJS = function () {
         this.coverage = coverage;
         this.evalue = new _bignumber2.default(0.05);
         this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
+        this.kmerMapSize = 0;
         this.env = env;
         if (env === 'browser') {
             this.fileDataRead = 0;
@@ -294,6 +295,7 @@ var KmerJS = exports.KmerJS = function () {
                     if (kmerObj.env === 'node' && kmerObj.progress) {
                         process.stdout.write('\n                               \n');
                     }
+                    kmerObj.kmerMapSize = kmerObj.kmerMap.size;
                     resolve(kmerObj.kmerMap);
                 });
             });
