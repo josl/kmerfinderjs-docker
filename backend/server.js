@@ -12,12 +12,18 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
 app.use(function (req, res, next) {
-    // res.header('Access-Control-Allow-Origin', 'http://localhost:9000');
+    res.header('Access-Control-Allow-Origin', 'http://localhost:9000');
     res.header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
     res.header('Access-Control-Allow-Credentials', true);
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
 });
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// parse application/json
+app.use(bodyParser.json());
 
 server.listen(80, function () {
     console.log('Ready');
@@ -81,56 +87,30 @@ app.post('/kmers', textParser, function (req, res) {
         })
         .on('end', function () {
             var jsonMatches = [];
-            var query = kmerJS.jsonToStrMap(kmers);
-            console.log(query.get('db'), query.get('collection'));
+            var kmerMap = kmerJS.stringToMap(kmers);
+            console.log(kmerMap.get('db'), kmerMap.get('collection'));
             var kmerObj = new kmerFinder.KmerFinderServer(
                 '',
-                'ATGAC', 16, 1, 1, true, 'mongo',
-                'mongodb://mongo:' + process.env.PORT + '/' +query.get('db'),
-                query.get('collection'), 'winner'
+                'ATGAC', 16, 1, 1, false, 'mongo',
+                'mongodb://mongo:' + process.env.PORT + '/' + kmerMap.get('db'),
+                kmerMap.get('collection'), 'winner'
             );
-            query.delete('db');
-            query.delete('collection');
-            var matches = kmerjs.findMatches(kmerMap);
-            var answers = 0;
-
-            matches.promise
-                .then(function () {
-                    kmerjs.close();
-                    socket.emit('lastMatch', jsonMatches);
+            kmerMap.delete('db');
+            kmerMap.delete('collection');
+            console.log('kmer Size received ', kmerMap.size);
+            kmerObj.kmerMapSize = kmerMap.size;
+            kmerObj.findMatches(kmerMap)
+                .then(function (matches) {
+                    kmerObj.close();
+                    matches.forEach(function (match) {
+                        jsonMatches.push(kmerJS.mapToJSON(match));
+                    });
+                    res.json(jsonMatches);
                 })
                 .catch(function (err) {
                     kmerObj.close();
                     console.log('Server: ', err.message);
                     res.status(204).send({ error: err.message});
                 });
-
-            // matches.promise.then(function (matches) {
-            //         kmerObj.close();
-            //         console.log('Matches found: ', matches.length);
-            //         matches.forEach(function (match) {
-            //             jsonMatches.push({
-            //                 template: match.get('template'),
-            //                 score: match.get('score'),
-            //                 expected: match.get('expected'),
-            //                 z: match.get('z'),
-            //                 probability: match.get('probability'),
-            //                 'frac-q': match.get('frac-q'),
-            //                 'frac-d': match.get('frac-d'),
-            //                 depth: match.get('depth'),
-            //                 'total-frac-q': match.get('total-frac-q'),
-            //                 'total-frac-d': match.get('total-frac-d'),
-            //                 'total-temp-cover': match.get('total-temp-cover'),
-            //                 'kmers-template': match.get('kmers-template'),
-            //                 species: match.get('species')
-            //             });
-            //         });
-            //         res.json(jsonMatches);
-            //     })
-            //     .catch(function (err) {
-            //         kmerObj.close();
-            //         console.log('Server: ', err.message);
-            //         res.status(204).send({ error: err.message});
-            //     });
         });
 });

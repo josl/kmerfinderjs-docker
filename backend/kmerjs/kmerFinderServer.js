@@ -507,9 +507,10 @@ function findKmersTemplate(template, collection) {
  */
 function matchSummary(kmerObject, sequence, match, results, summary) {
     var minScore = 0;
-    var kmerQuerySize = kmerObject.kmerMap.size;
-    var originalUScore = kmerObject.firstMatches.get(sequence).uScore;
-    var originalTScore = kmerObject.firstMatches.get(sequence).tScore;
+    var kmerQuerySize = kmerObject.kmerMapSize;
+    var sequenceHit = kmerObject.firstMatches.get(sequence);
+    var originalUScore = sequenceHit.uScore;
+    var originalTScore = sequenceHit.tScore;
     var matchUScore = match.uScore;
     if (match.uScore > minScore) {
         var z = (0, _stats.zScore)(match.uScore, match.ulength, results.hits, summary.uniqueLens);
@@ -570,7 +571,6 @@ function winnerScoring(kmerObject, kmerMap) {
     var hitCounter = 0;
     var notFound = true;
     var kmerResults = [];
-    var eventEmmitter = new _events2.default.EventEmitter();
     var firstMatch = kmerObject.conn.model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }, { _id: 0 }).then(function (summary) {
         kmerObject.summary = summary;
         return findKmersMatches(kmerMap, kmerObject.conn, kmerObject.collection, kmerObject.progress);
@@ -593,7 +593,20 @@ function winnerScoring(kmerObject, kmerMap) {
         if (winner && kmerObject.evalue.cmp(winner.get('probability')) >= 0) {
             hitCounter += 1;
             kmerResults.push(winner);
-            eventEmmitter.emit('winner', winner);
+            if (kmerObject.progress) {
+                var seq = winner.get('template');
+                var score = winner.get('score');
+                var expec = winner.get('expected');
+                var z = winner.get('z');
+                var p = winner.get('probability');
+                var fracQ = winner.get('frac-q');
+                var fracD = winner.get('frac-d');
+                var cov = winner.get('depth');
+                var ulen = winner.get('kmers-template');
+                var spec = winner.get('species');
+                var _out = seq + '\t' + score + '\t' + expec + '\t' + z + '\t' + p + '\t' + fracQ + '\t' + fracD + '\t' + cov + '\t' + ulen + '\t' + spec + '\n';
+                process.stdout.write(_out);
+            }
             return match.kmers;
         } else {
             return;
@@ -681,8 +694,9 @@ function winnerScoring(kmerObject, kmerMap) {
             if (kmerResults.length === 0) {
                 throw new Error('No hits were found! (kmerResults.length === 0)');
             }
-            console.log('exiting...');
-            return;
+            console.log('exiting...', kmerObject.kmerMapSize);
+            console.log('kmerMapSize...', kmerObject.kmerMapSize);
+            return kmerResults;
         } else {
             // Find new matches from first matches.
             var results = getMatches(kmerObject, kmerMap);
@@ -692,10 +706,7 @@ function winnerScoring(kmerObject, kmerMap) {
         }
     };
 
-    return {
-        'promise': firstMatch.then(findWinner).then(removeWinnerKmers).then(loop),
-        'event': eventEmmitter
-    };
+    return firstMatch.then(findWinner).then(removeWinnerKmers).then(loop);
 }
 
 /**

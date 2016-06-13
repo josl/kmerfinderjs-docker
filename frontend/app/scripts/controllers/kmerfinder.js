@@ -16,7 +16,6 @@ angular.module('cgeUploaderApp')
           $scope.matches = false;
           $scope.error = false;
           $scope.message = {text: '', status: 0};
-        //   var socket = io.connect(API.url);
           $scope.analize = function () {
               console.log($scope.isolateFiles);
               if ($scope.isolateFiles && $scope.isolateFiles.length) {
@@ -25,45 +24,41 @@ angular.module('cgeUploaderApp')
                     //   $http.get(API.url);
                       var kmerjs = new kmerModule.KmerFinderClient(
                           file, 'browser', 'ATGAC', 16, 1, 1, true, 'server',
-                          API.url + '', '', 'KmerBacteria', 'Kmers');
+                          API.url + 'kmers', '', 'KmerBacteria', 'Kmers');
                       $scope.fileProgress = kmerjs.lines;
                       // Own reading file function
                       console.log(kmerjs);
-                      var kmers = kmerjs.findKmers();
-                      kmers.event.on('progress', function() {
+                      var kmerObj = kmerjs.findKmers();
+                      kmerObj.event.on('progress', function() {
                           file.lines = kmerjs.lines;
                           file.kmers = kmerjs.kmerMap.size;
                           file.dataRead = kmerjs.fileDataRead * 100 / file.size;
                           $scope.$apply();
                       });
 
-                      kmers.promise.then(function (kmers) {
+                      kmerObj.promise
+                        .then(function (kmers) {
                             console.log('Let\'s find some matches! ');
-                            var matches = kmerjs.findMatches(kmers);
-                            matches.event.on('queryReceived', function () {
-                                $scope.message.text = 'Query recevied! Calculating matches...';
-                                $scope.message.status = 1;
-                                console.log('queryReceived');
-                                $scope.$apply();
-                            });
-                            matches.event.on('newMatch', function (match) {
-                                console.log('newMatch');
-                                if (file.matchesGrid.data.length === 0){
-                                    file.species = match.species;
-                                    file.match = true;
-                                }
-                                file.matchesGrid.data.push(match);
-                                $scope.$apply();
-                            });
-                            return matches.promise;
+                            return kmerjs.findMatches(kmers);
                         })
                         .then(function (response) {
-                            // TODO: Chech status code
-                            // ans.toJSON()
-                            console.log('We are done here!!', response);
-                            $scope.message.text = 'All matches recevied!';
-                            $scope.message.status = 3;
-                            $scope.$apply();
+                            console.log('We are done here!!');
+                            var matchesData = '';
+                            response
+                                .on('data', function(chunk) {
+                                    matchesData += chunk.toString();
+                                    // compressed data as it is received
+                                    console.log('received ' + chunk.length + ' bytes of compressed data')
+                                })
+                                .on('end', function() {
+                                    var matchesJSON = JSON.parse(matchesData);
+                                    file.species = matchesJSON[0].species;
+                                    file.match = true;
+                                    file.matchesGrid.data = matchesJSON;
+                                    $scope.message.text = 'All matches recevied!';
+                                    $scope.message.status = 3;
+                                    $scope.$apply();
+                                });
                         })
                         .catch(function (error) {
                             console.log('ERROR!!', error);
