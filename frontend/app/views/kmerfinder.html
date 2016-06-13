@@ -8,11 +8,6 @@
         <p><a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a></p> -->
     </div>
     <drop-files-button active="true" is-service="true"></drop-files-button>
-    <!-- <div class="alert alert-danger text-center" role="alert" ng-show="error">
-        <h4>
-            {{errorMessage}}
-        </h4>
-    </div> -->
     <div ng-show="isolateFiles.length !== 0" class="well well-lg">
         <div class="row">
             <div class="col-xs-6">
@@ -45,16 +40,7 @@
             <h3 ng-show="f.match" class="text-center">
                 <span style="color: #ff5722">{{f.species}}</span>
             </h3>
-            <div ng-show="f.match" ui-grid="f.matchesGrid" class="myGrid" ui-grid-auto-resize></div>
-            <!-- <uib-accordion>
-                <uib-accordion-group is-open="f.status">
-                    <uib-accordion-heading>
-                        I can have markup, too!
-                        <i class="pull-right glyphicon" ng-class="{'glyphicon-chevron-down': f.status.open, 'glyphicon-chevron-right': !f.status.open}"></i>
-                    </uib-accordion-heading>
-                    This is just some content to illustrate fancy headings.
-                </uib-accordion-group>
-            </uib-accordion> -->
+            <div ng-show="f.match" ui-grid="f.matchesGrid" class="myGrid" ui-grid-auto-resize ui-grid-resize-columns></div>
         </div>
 
     </div>
