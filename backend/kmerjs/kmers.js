@@ -19,6 +19,10 @@ var _bignumber = require('bignumber.js');
 
 var _bignumber2 = _interopRequireDefault(_bignumber);
 
+var _bluebird = require('bluebird');
+
+var _bluebird2 = _interopRequireDefault(_bluebird);
+
 var _console = require('console');
 
 var _console2 = _interopRequireDefault(_console);
@@ -31,15 +35,17 @@ var _filereaderStream = require('filereader-stream');
 
 var _filereaderStream2 = _interopRequireDefault(_filereaderStream);
 
-var _events = require('events');
+var _progressStream = require('progress-stream');
 
-var _events2 = _interopRequireDefault(_events);
+var _progressStream2 = _interopRequireDefault(_progressStream);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var fs = require('fs');
+// import events from 'events';
+
 var complementMap = exports.complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
 
 function objToStrMap(obj) {
@@ -191,8 +197,10 @@ var KmerJS = exports.KmerJS = function () {
         key: 'readFile',
         value: function readFile() {
             var kmerObj = this;
-            var eventEmmitter = new _events2.default.EventEmitter();
-            var promise = new Promise(function (resolve) {
+            var str = (0, _progressStream2.default)({
+                time: 100 /* ms */
+            });
+            var promise = new _bluebird2.default(function (resolve) {
 
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
                 var liner = new _stream2.default.Transform({ objectMode: true });
@@ -202,13 +210,10 @@ var KmerJS = exports.KmerJS = function () {
                         data = this._lastLineData + data;
                     }
                     var lines = data.split('\n');
-                    kmerObj.bytesRead += chunk.length;
-                    kmerObj.linesPerChunk += lines.length;
-                    if (kmerObj.env === 'browser') {
-                        kmerObj.fileDataRead += chunk.length;
-                        // kmerObj.fileDataRead += (kmerObj.lines * kmerObj.bytesRead) / kmerObj.linesPerChunk;
-                        eventEmmitter.emit('progress');
-                    }
+                    // if (kmerObj.env === 'browser') {
+                    //     kmerObj.fileDataRead += chunk.length;
+                    //     eventEmmitter.emit('progress');
+                    // }
                     this._lastLineData = lines.splice(lines.length - 1, 1)[0];
 
                     lines.forEach(this.push.bind(this));
@@ -223,9 +228,9 @@ var KmerJS = exports.KmerJS = function () {
                 };
 
                 if (kmerObj.env === 'node') {
-                    fs.createReadStream(kmerObj.fastq).pipe(liner);
+                    fs.createReadStream(kmerObj.fastq).pipe(str).pipe(liner);
                 } else if (kmerObj.env === 'browser') {
-                    (0, _filereaderStream2.default)(kmerObj.fastq).pipe(liner);
+                    (0, _filereaderStream2.default)(kmerObj.fastq).pipe(str).pipe(liner);
                 }
                 var i = 0;
                 var lines = 0;
@@ -236,12 +241,15 @@ var KmerJS = exports.KmerJS = function () {
                     var line = void 0;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
-                            [line, complement(line)].forEach(function (kmerLine) {
-                                kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
-                            });
+                            kmerObj.kmersInLine(line, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
+                            kmerObj.kmersInLine(complement(line), kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
+                            // [line, complement(line)].forEach(function (kmerLine) {
+                            //     kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap,
+                            //         kmerObj.length,kmerObj.preffix, kmerObj.step);
+                            // });
                         } else if (i === 3) {
-                            i = -1;
-                        }
+                                i = -1;
+                            }
                         i += 1;
                         lines += 1;
                         kmerObj.lines = lines;
@@ -262,7 +270,7 @@ var KmerJS = exports.KmerJS = function () {
             });
             return {
                 promise: promise,
-                event: eventEmmitter
+                event: str
             };
         }
     }]);

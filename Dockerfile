@@ -6,6 +6,8 @@ MAINTAINER Jose Luis Bellod Cisneros
 RUN mkdir /root/.ssh/
 RUN ssh-keyscan registry.npmjs.org >> /root/.ssh/known_hosts
 
+RUN apt-get -qq update && apt-get install -y -qq --no-install-recommends vim
+
 # Create app directory
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app

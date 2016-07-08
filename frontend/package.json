@@ -2,6 +2,7 @@
   "name": "cgeuploader",
   "private": true,
   "devDependencies": {
+    "file-utils": "^0.2.2",
     "grunt": "^0.4.5",
     "grunt-angular-templates": "^0.5.7",
     "grunt-autoprefixer": "^2.0.0",
