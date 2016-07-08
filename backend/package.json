@@ -27,6 +27,7 @@
     "mongodb-core": "",
     "mongodb-es6": "",
     "mongoose": "",
+    "progress-stream": "",
     "readline2": "",
     "request": "",
     "resolve": "",
