@@ -11,9 +11,9 @@
     <div ng-show="isolateFiles.length !== 0" class="well well-lg">
         <div class="row">
             <div class="col-xs-6">
-                <button id="submitButton" ng-click="analize()" type="button" class="text-center btn btn-material-indigo-500 btn-lg">
+                <!-- <button id="submitButton" ng-click="analize()" type="button" class="text-center btn btn-material-indigo-500 btn-lg">
                     Predict Species
-                </button>
+                </button> -->
             </div>
             <div class="col-xs-6">
                 <p ng-show="message.status !== 0" class="text-center"
@@ -27,14 +27,15 @@
         </div>
 
         <div ng-repeat="f in isolateFiles">
-            <div class="text-center" ng-show="f.lines">
+            <div class="text-center" ng-show="f.dataRead">
                 Reading
                     <strong ng-class="{parsing: f.dataRead < 100, parsed: f.dataRead >= 100}">
                         {{f.name}}
                     </strong>
-                <div>({{f.lines}} lines / {{f.kmers}} kmers)</div>
+                <div>({{f.kmerSize}} kmers)</div>
                 <div class="progress">
                     <div class="progress-bar" style="width: {{f.dataRead}}%;"></div>
+                    <span class="sr-only">{{f.dataRead}}%</span>
                 </div>
             </div>
             <h3 ng-show="f.match" class="text-center">

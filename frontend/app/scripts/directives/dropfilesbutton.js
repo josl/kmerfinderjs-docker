@@ -12,7 +12,7 @@ angular.module('cgeUploaderApp')
             templateUrl: 'templates/dropFilesButton.html',
             restrict: 'E',
             link: function postLink(scope, element, attrs) {
-                // console.log(scope, element, attrs, scope.isolateFiles);
+                console.log(scope, element, attrs, scope.isolateFiles);
                 scope.tabs = scope.$parent.tabs;
                 scope.filesValid = false;
                 scope.isService = attrs.isService;
@@ -20,10 +20,15 @@ angular.module('cgeUploaderApp')
                     console.log(scope.isolateFiles, $file);
                     $file.match = false;
                     $file.species = '';
+                    $file.firstTime = ($file.firstTime? false: true);
                     $file.matchesGrid = {
                         showGridFooter: true,
                         enableSorting: true,
                         cellEditableCondition: true,
+                        onRegisterApi: function(gridApi) {
+                            console.log(gridApi);
+                            $file.gridApi = gridApi;
+                        },
                         columnDefs: [
                             {field: 'species', width: '50%'},
                             {field: 'template', width: '20%'},
@@ -45,14 +50,13 @@ angular.module('cgeUploaderApp')
                     $file.status = {
                         isFirstOpen: true,
                         isFirstDisabled: false
-                      };
+                    };
+                    console.log($file.firstTime);
+                    // Inmmeditely starts parsing
+                    if ($file.firstTime){
+                        scope.$broadcast('newFile', $file);
+                    }
                     return true;
-                    // if (scope.isService === 'false'){
-                    //     return _.contains(scope.templateFiles, $file.name);
-                    // }else {
-                    //     scope.isolateFiles.push($file);
-                    //     return true;
-                    // }
                 };
             }
         };

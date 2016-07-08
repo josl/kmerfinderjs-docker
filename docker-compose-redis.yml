@@ -1,0 +1,27 @@
+angular:
+  image: httpd
+  ports:
+    - "9999:80"
+  links:
+    - node
+  volumes:
+    - ./frontend/dist:/usr/local/apache2/htdocs/
+node:
+    build: .
+    command: "npm start"
+    ports:
+        - "5000:80"
+    links:
+        - redis
+    environment:
+        PORT: 6379
+    volumes:
+        - $PWD/database:/usr/data
+redis:
+    image: redis:latest
+    command: "redis-server --appendonly yes"
+    volumes:
+        - $PWD/database/redis:/data
+        - $PWD/database:/usr/data
+    ports:
+        - "6379:6379"

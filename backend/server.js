@@ -93,23 +93,31 @@ app.post('/kmers', textParser, function (req, res) {
             var kmerObj = new kmerFinder.KmerFinderServer(
                 '',
                 'ATGAC', 16, 1, 1, false, 'mongo',
-                'mongodb://mongo:' + process.env.PORT + '/' + kmerMap.get('db'),
+                'redis://redis:' + process.env.PORT,
+                // 'mongodb://mongo:' + process.env.PORT + '/' + kmerMap.get('db'),
                 kmerMap.get('collection'), 'winner'
             );
             kmerMap.delete('db');
             kmerMap.delete('collection');
             console.log('kmer Size received ', kmerMap.size);
             kmerObj.kmerMapSize = kmerMap.size;
-            kmerObj.findMatches(kmerMap)
+            kmerObj.findFirstMatch(kmerMap)
                 .then(function (matches) {
-                    kmerObj.close();
-                    matches.forEach(function (match) {
-                        jsonMatches.push(kmerJS.mapToJSON(match));
+                    console.log(matches.hits, matches.templates.size);
+                    matches.templates.forEach(function (hit, sequence) {
+                        hit.kmers = Array.from(hit.kmers);
+                        // hit.kmers = new Array(hit.kmers.values());
                     });
-                    res.json(jsonMatches);
+                    matches.summary = kmerObj.summary;
+                    matches.templates = kmerJS.mapToJSON(matches.templates);
+                    // kmerObj.close();
+                    // matches.forEach(function (match) {
+                    //     jsonMatches.push(kmerJS.mapToJSON(match));
+                    // });
+                    res.json(matches);
                 })
                 .catch(function (err) {
-                    kmerObj.close();
+                    // kmerObj.close();
                     console.log('Server: ', err.message);
                     res.status(204).send({ error: err.message});
                 });

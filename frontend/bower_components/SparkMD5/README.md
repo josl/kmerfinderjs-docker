@@ -24,7 +24,7 @@ NOTE: Please disable Firebug while performing the test!
 
 Incremental md5 performs a lot better for hashing large amounts of data, such as
 files. One could read files in chunks, using the FileReader & Blob's, and append
-each chunk for md5 hashing while keeping memory usage low. See example bellow.
+each chunk for md5 hashing while keeping memory usage low. See example below.
 
 
 ## Usage
@@ -172,6 +172,13 @@ Sets the internal computation state. See: getState().
 Hashes an array buffer directly, returning the hex result.
 If `raw` is true, the result as a binary string will be returned instead.
 Note that this function is `static`.
+
+
+## License
+
+The project is double licensed, being [WTF2](./LICENSE) the master license and [MIT](./LICENSE2) the alternative license.
+The reason to have two licenses is that some entities refuse to use the master license (WTF2) due to
+bad language. If that's also your case, you can choose the alternative license.
 
 
 ## Credits

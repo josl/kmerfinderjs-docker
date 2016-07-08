@@ -40,6 +40,7 @@ module.exports = function(config) {
       'bower_components/js-xlsx/dist/jszip.js',
       'bower_components/underscore/underscore.js',
       'bower_components/angular-ui-grid/ui-grid.min.js',
+      'bower_components/bootstrap-sass/assets/javascripts/bootstrap.js',
       'bower_components/bootstrap-material-design/dist/js/material.js',
       'bower_components/bootstrap-material-design/dist/js/ripples.js',
       'bower_components/moment/moment.js',
