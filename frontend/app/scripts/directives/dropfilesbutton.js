@@ -16,8 +16,15 @@ angular.module('cgeUploaderApp')
                 scope.tabs = scope.$parent.tabs;
                 scope.filesValid = false;
                 scope.isService = attrs.isService;
+                scope.parsedFiles = 0;
+                scope.dropping = function ($files) {
+                    if ($files.length !== 0){
+                        console.log('Start parsing');
+                        scope.$broadcast('startParsing', $files);
+                    }
+                };
                 scope.validate = function ($file) {
-                    console.log(scope.isolateFiles, $file);
+                    // console.log(scope.isolateFiles, $file);
                     $file.match = false;
                     $file.species = '';
                     $file.firstTime = ($file.firstTime? false: true);
@@ -51,11 +58,12 @@ angular.module('cgeUploaderApp')
                         isFirstOpen: true,
                         isFirstDisabled: false
                     };
-                    console.log($file.firstTime);
+                    // console.log('LALALALALALALAL', scope.parsedFiles === scope.isolateFiles, scope.isolateFiles);
                     // Inmmeditely starts parsing
-                    if ($file.firstTime){
-                        scope.$broadcast('newFile', $file);
-                    }
+                    // if ($file.firstTime){
+                    //     scope.parsedFiles++;
+                    //     // scope.$broadcast('newFile', $file);
+                    // }
                     return true;
                 };
             }

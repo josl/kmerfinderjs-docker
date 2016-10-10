@@ -68,6 +68,9 @@ eval "$(docker-machine env default)"
 docker rm $(docker stop $(docker ps -aq))
 # Remove all dangling images
 docker rmi $(docker images -qf "dangling=true")
+# Remove exited containers
+docker rm $(docker ps -qf status=exited)
+
 ```
 
 ## License

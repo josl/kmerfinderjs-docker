@@ -13,10 +13,6 @@ var _console = require('console');
 
 var _console2 = _interopRequireDefault(_console);
 
-var _lodash = require('lodash');
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
 var _stats = require('./stats');
 
 var _bignumber = require('bignumber.js');
@@ -37,6 +33,14 @@ var _redis = require('redis');
 
 var _redis2 = _interopRequireDefault(_redis);
 
+var _performanceNow = require('performance-now');
+
+var _performanceNow2 = _interopRequireDefault(_performanceNow);
+
+var _objectSizeof = require('object-sizeof');
+
+var _objectSizeof2 = _interopRequireDefault(_objectSizeof);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -46,12 +50,14 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } } /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush", "emit"] }] */
-// let fs = require('browserify-fs');
 
 
-_bignumber2.default.config({ ROUNDING_MODE: 2 });
-// import events from 'events';
+_bignumber2.default.config({
+    ROUNDING_MODE: 2
+});
 
+
+_bluebird2.default.promisifyAll(_redis2.default);
 _bluebird2.default.promisifyAll(_redis2.default.RedisClient.prototype);
 _bluebird2.default.promisifyAll(_redis2.default.Multi.prototype);
 
@@ -75,121 +81,11 @@ var kmerMapSchema = new Schema({
     kmer: String,
     templates: Array
 });
-/**
- * [extractKmers
-     db.genomes.aggregate([
-      {$match: {}},
-      {$unwind: '$reads'},
-      {$group: {
-          _id: {read: '$reads'},
-          templates: {
-            $push: {
-              sequence: '$sequence',
-              lengths: '$lengths',
-              ulengths: '$ulenght',
-              species: '$species'
-            }
-          }
-        }
-      },
-      {$project: {
-          _id: 0, kmer: '$_id.read', templates: '$templates'
-        }
-      },
-      {$out: 'KmerBacteria'}
-    ], {
-      allowDiskUse: true
-    })
- * ]
- * @param  {[type]} kmerObject [description]
- * @return {[type]}            [description]
- */
-function extractKmers(kmerObject) {
-    return kmerObject.conn.model('Bacteria', kmerMapSchema, 'Bacteria').aggregate([{
-        $match: {}
-    }]).unwind('reads').group({
-        _id: { read: '$reads' },
-        templates: {
-            $push: {
-                sequence: '$sequence',
-                lengths: '$lengths',
-                ulengths: '$ulenght',
-                species: '$species'
-            }
-        }
-    }).project({
-        _id: 0, kmer: '$_id.read', templates: '$templates'
-    }).out('KmerBacteria').allowDiskUse(true).exec();
-}
 
-function createSummary(kmerObject) {
-    kmerObject.conn.model.aggregate([{ $unwind: "$templates" }, { $group: {
-            _id: { sequence: { "templates": "$templates.sequence" } },
-            count: { $sum: 1 }
-        } }, { $group: {
-            _id: null,
-            count: { $sum: 1 }
-        }
-    }]);
-    kmerObject.conn.model.aggregate([{ $unwind: "$templates" }, { $group: {
-            _id: null,
-            count: { $sum: "$templates.lengths" }
-        }
-    }]);
-    kmerObject.conn.model.aggregate([{ $unwind: "$templates" }, { $group: {
-            _id: null,
-            count: { $sum: "$templates.ulengths" }
-        }
-    }]);
-    return;
-}
-
-function findMatchesMapReduce(kmerMap, url, collection) {
-    kmerMapSchema.index({ kmer: 1 });
-    kmerMapSchema.index({ sequence: 1 });
-    var kmerDB = _mongoose2.default.model(collection, kmerSchema, collection);
-    var mapReduce = {};
-    mapReduce.map = 'function () {\n        var matches = 0;\n        for (var i = 0; i < kmerQuery.length; i++) {\n            if (this.reads.indexOf(kmerQuery[i]) !== -1) {\n                matches += 1;\n            }\n        }\n        emit(\'test\', matches);\n    }';
-    mapReduce.reduce = 'function (key, values) {\n            return Array.sum(values);\n    }';
-    mapReduce.scope = {
-        kmerQuery: [].concat(_toConsumableArray(kmerMap.keys()))
-    };
-    mapReduce.query = {
-        reads: {
-            // The $in operator selects the documents where the value of a field
-            // equals any value in the specified array
-            $in: [].concat(_toConsumableArray(kmerMap.keys()))
-        }
-    };
-    return kmerDB.mapReduce(mapReduce, function (err, data) {
-        console.log(err, data);
-    });
-}
-
-function updateTemplates(templates, hit, template, kmerCoverage) {
-    if (template !== undefined) {
-        template.tScore += kmerCoverage;
-        template.uScore += 1;
-    } else {
-        templates.set(hit.template, {
-            tScore: kmerCoverage,
-            uScore: 1,
-            lengths: hit.lengths,
-            ulength: hit.ulengths,
-            species: hit.species,
-            kmers: new Set(hit.filteredKmers)
-        });
-    }
-}
-
-function findKmersMatchesRedis(kmerMap, client) {
-    kmerMapSchema.index({ reads: 1 });
-    kmerMapSchema.index({ 'templates.sequence': 1 });
-    // let kmerDB = conn.model(collection, kmerMapSchema, collection);
+function findKmersMatchesRedis(kmerMap, client, start) {
     var kmerQuery = [].concat(_toConsumableArray(kmerMap.keys()));
     var templates = new Map();
     var nHits = 0;
-    console.log('let\'s do it! ', kmerQuery.length);
 
     function updateMatches(matchTemplates, index) {
         var kmer = kmerQuery[index];
@@ -214,263 +110,35 @@ function findKmersMatchesRedis(kmerMap, client) {
             }
         });
     }
+
     var promises = [];
     // start a separate batch command queue
     kmerQuery.forEach(function (kmer) {
         promises.push(['lrange', kmer, 0, -1]);
     });
-    console.log('ready!');
-    return client.batch(promises)
-    // return client.batch(promises.slice(0, Math.round(promises.length/3)))
-    .execAsync().then(function (results) {
-        console.log('First', results.length);
+    return client.batch(promises).execAsync().then(function (results) {
         results.forEach(function (matchTemplates, index) {
             updateMatches(matchTemplates, index);
         });
-        console.log('First', results.length);
-        console.log(nHits);
         if (nHits === 0) {
             throw new Error('No hits were found!');
         }
+        var end = (0, _performanceNow2.default)();
         return {
             templates: templates,
-            hits: nHits
+            hits: nHits,
+            time: end - start
         };
-    });
-    // .then(function (results) {
-    //     console.log('First', results.length);
-    //     results.forEach(function (matchTemplates, index) {
-    //         updateMatches(matchTemplates, index);
-    //     });
-    //     console.log('First', results.length);
-    //     return client
-    //         .batch(promises.slice(Math.round(promises.length/3), Math.round(2*promises.length/3)))
-    //         .execAsync();
-    // })
-    // .then(function (results) {
-    //     console.log('Second', results.length);
-    //     results.forEach(function (matchTemplates, index) {
-    //         updateMatches(matchTemplates, index + Math.round(promises.length/3));
-    //     });
-    //     return client
-    //         .batch(promises.slice(Math.round(2*promises.length/3), promises.length))
-    //         .execAsync();
-    // })
-    // .then(function (results) {
-    //     console.log('Third', results.length);
-    //     results.forEach(function (matchTemplates, index) {
-    //         updateMatches(matchTemplates, index + Math.round(2*promises.length/3));
-    //     });
-    //     console.log(nHits);
-    //     if (nHits === 0) {
-    //         throw new Error('No hits were found!');
-    //     }
-    //     return {
-    //         templates: templates,
-    //         hits: nHits
-    //     };
-    // });
-    // kmerQuery.forEach(function (kmer) {
-    //     promises.push(client.lrangeAsync(kmer, 0, -1));
-    // });
-    // console.log('promises ready');
-    // return Promise.all(promises)
-    //     .then(function(results) {
-    //         results.forEach(function (matchTemplates, index) {
-    //             let kmer = kmerQuery[index];
-    //             nHits += matchTemplates.length;
-    //             let kmerCoverage = kmerMap.get(kmer);
-    //             matchTemplates.forEach(function (template) {
-    //                 template = JSON.parse(template);
-    //                 let sequence = templates.get(template.sequence);
-    //                 if (sequence !== undefined){
-    //                     sequence.tScore += kmerCoverage;
-    //                     sequence.uScore += 1;
-    //                     sequence.kmers.add(kmer);
-    //                 }else {
-    //                     templates.set(template.sequence, {
-    //                         tScore: kmerCoverage,
-    //                         uScore: 1,
-    //                         lengths: template.lengths,
-    //                         ulength: template.ulengths,
-    //                         species: template.species,
-    //                         kmers: new Set([kmer])
-    //                     });
-    //                 }
-    //             });
-    //         });
-    //         if (nHits === 0) {
-    //             throw new Error('No hits were found!');
-    //         }
-    //         console.log('hits! ', nHits);
-    //         return {
-    //             templates: templates,
-    //             hits: nHits
-    //         };
-    //     });
-}
-
-function findKmersMatches(kmerMap, conn, collection) {
-    kmerMapSchema.index({ reads: 1 });
-    kmerMapSchema.index({ 'templates.sequence': 1 });
-    var kmerDB = conn.model(collection, kmerMapSchema, collection);
-    var kmerQuery = [].concat(_toConsumableArray(kmerMap.keys()));
-
-    return new Promise(function (resolve, reject) {
-        var cursor = kmerDB.aggregate([{
-            $match: {
-                kmer: {
-                    $in: kmerQuery
-                }
-            }
-        }]). // $type: 2 // BSON type (2) = String
-        unwind('templates') // FIXME: Look into not unwind & postprocess in client
-        .group({ // Apparently is faster than the alternative...
-            _id: { template: '$templates' },
-            filteredKmers: {
-                $push: '$kmer'
-            }
-        }).project({
-            _id: 0,
-            template: '$_id.template.sequence',
-            lengths: '$_id.template.lengths',
-            ulengths: '$_id.template.ulengths',
-            species: '$_id.template.species',
-            filteredKmers: '$filteredKmers'
-        }).allowDiskUse(true).cursor({ batchSize: 3000 }).exec();
-
-        cursor.toArray(function (err, hits) {
-            if (err) {
-                reject(err);
-            }
-            var templates = new Map();
-            var nHits = 0;
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
-
-            try {
-                for (var _iterator = hits[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                    var hit = _step.value;
-
-                    nHits += hit.filteredKmers.length;
-                    for (var i = 0; i < hit.filteredKmers.length; i++) {
-                        updateTemplates(templates, hit, templates.get(hit.template), kmerMap.get(hit.filteredKmers[i]));
-                    }
-                }
-            } catch (err) {
-                _didIteratorError = true;
-                _iteratorError = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion && _iterator.return) {
-                        _iterator.return();
-                    }
-                } finally {
-                    if (_didIteratorError) {
-                        throw _iteratorError;
-                    }
-                }
-            }
-
-            console.log(nHits);
-            if (nHits === 0) {
-                reject('No hits were found!');
-            }
-            resolve({
-                templates: templates,
-                hits: nHits
-            });
-        });
-    });
-}
-
-function findKmersMatches2(kmerMap, conn, collection) {
-    kmerMapSchema.index({ reads: 1 });
-    kmerMapSchema.index({ 'templates.sequence': 1 });
-    var kmerDB = conn.model(collection, kmerMapSchema, collection);
-    var kmerQuery = [].concat(_toConsumableArray(kmerMap.keys()));
-
-    return new Promise(function (resolve, reject) {
-        var cursor = kmerDB.aggregate([{
-            $match: {
-                kmer: {
-                    $in: kmerQuery
-                }
-            }
-        }])
-        // .unwind('templates') // FIXME: Look into not unwind & postprocess in client
-        // .group({             // Apparently is faster than the alternative...
-        //     _id: {template: '$templates'},
-        //     filteredKmers:{
-        //         $push: '$kmer'
-        //     }
-        // })
-        // .project({
-        //     _id: 0,
-        //     template: '$templates.sequence',
-        //     lengths: '$templates.lengths',
-        //     ulengths: '$templates.ulengths',
-        //     species: '$templates.species',
-        //     kmer: '$kmer'
-        // })
-        . // $type: 2 // BSON type (2) = String
-        allowDiskUse(true).cursor({ batchSize: 3000 }).exec();
-
-        cursor.toArray(function (err, kmerHits) {
-            if (err) {
-                reject(err);
-            }
-            var templates = new Map();
-            var nHits = 0;
-            // let templateHits = new Map();
-            kmerHits.forEach(function (hit) {
-                var kmerCoverage = kmerMap.get(hit.kmer);
-                hit.templates.forEach(function (kmerTemplate) {
-                    var template = templates.get(kmerTemplate.sequence);
-                    if (template !== undefined) {
-                        template.tScore += kmerCoverage;
-                        template.uScore += 1;
-                        template.kmers.add(hit.kmer);
-                    } else {
-                        templates.set(kmerTemplate.sequence, {
-                            tScore: kmerCoverage,
-                            uScore: 1,
-                            lengths: kmerTemplate.lengths,
-                            ulength: kmerTemplate.ulengths,
-                            species: kmerTemplate.species,
-                            kmers: new Set([hit.kmer])
-                        });
-                        template = templates.get(kmerTemplate.sequence);
-                    }
-                    nHits += 1;
-                });
-            });
-
-            //  for (let hit of hits){
-            //     nHits += hit.filteredKmers.length;
-            //     for (var i = 0; i < hit.filteredKmers.length; i++) {
-            //         updateTemplates(
-            //             templates, hit, templates.get(hit.template),
-            //             kmerMap.get(hit.filteredKmers[i])
-            //         );
-            //     }
-            // }
-            console.log(nHits);
-            if (nHits === 0) {
-                reject('No hits were found!');
-            }
-            resolve({
-                templates: templates,
-                hits: nHits
-            });
-        });
     });
 }
 
 function findMatchesMongoAggregation(kmerMap, conn, collection) {
-    kmerSchema.index({ reads: 1 });
-    kmerSchema.index({ sequence: 1 });
+    kmerSchema.index({
+        reads: 1
+    });
+    kmerSchema.index({
+        sequence: 1
+    });
     var kmerDB = conn.model(collection, kmerMapSchema, collection);
     var kmerQuery = [].concat(_toConsumableArray(kmerMap.keys()));
 
@@ -481,7 +149,11 @@ function findMatchesMongoAggregation(kmerMap, conn, collection) {
             }
         }
     }]).project({
-        _id: 0, sequence: 1, lengths: 1, ulength: "$ulenght", species: 1,
+        _id: 0,
+        sequence: 1,
+        lengths: 1,
+        ulength: "$ulenght",
+        species: 1,
         filteredKmers: {
             $filter: {
                 input: "$reads",
@@ -502,13 +174,13 @@ function findMatchesMongoAggregation(kmerMap, conn, collection) {
     }).exec().then(function (hits) {
         var templates = new Map();
         var nHits = 0;
-        var _iteratorNormalCompletion2 = true;
-        var _didIteratorError2 = false;
-        var _iteratorError2 = undefined;
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
 
         try {
             var _loop = function _loop() {
-                var hit = _step2.value;
+                var hit = _step.value;
 
                 nHits += hit.filteredKmers.length;
                 hit.filteredKmers.forEach(function (read) {
@@ -530,20 +202,20 @@ function findMatchesMongoAggregation(kmerMap, conn, collection) {
                 });
             };
 
-            for (var _iterator2 = hits[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+            for (var _iterator = hits[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                 _loop();
             }
         } catch (err) {
-            _didIteratorError2 = true;
-            _iteratorError2 = err;
+            _didIteratorError = true;
+            _iteratorError = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                    _iterator2.return();
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                    _iterator.return();
                 }
             } finally {
-                if (_didIteratorError2) {
-                    throw _iteratorError2;
+                if (_didIteratorError) {
+                    throw _iteratorError;
                 }
             }
         }
@@ -551,140 +223,11 @@ function findMatchesMongoAggregation(kmerMap, conn, collection) {
         if (nHits === 0) {
             throw new Error('No hits were found!');
         }
-        var out = 'Hits: ' + nHits + ' / Templates: ' + hits.length + '\r';
         return {
             templates: templates,
             hits: nHits
         };
     });
-}
-
-/**
- * [findMatchesMongo description]
- * @param  {[type]} kmerMap    [Dictionary of presence of Kmers]
- * @param  {[type]} url        [description]
- * @param  {[type]} collection [description]
- * @return {[type]}            [description]
- */
-function findMatchesMongo(kmerMap, url, collection) {
-    var limit = arguments.length <= 3 || arguments[3] === undefined ? 0 : arguments[3];
-
-    kmerSchema.index({ reads: 1 });
-    kmerSchema.index({ sequence: 1 });
-    var kmerDB = _mongoose2.default.model(collection, kmerSchema, collection);
-    var query = {
-        reads: {
-            // The $in operator selects the documents where the value of a field
-            // equals any value in the specified array
-            $in: [].concat(_toConsumableArray(kmerMap.keys()))
-        }
-    };
-    // Get unique and total matches
-    var templates = new Map();
-    var hits = void 0;
-    // Query to return matched templates
-    var cursor = kmerDB.aggregate([{ $match: query }]);
-    return cursor.unwind('reads').match(query).group({
-        _id: { sequence: '$sequence', kmer: '$reads' },
-        uScore: { $sum: 1 }
-    }).exec().then(function (matches) {
-        hits = _lodash2.default.reduce(matches, function (total, n) {
-            return total + n.uScore;
-        }, 0);
-        console.log('Hits found: ', hits);
-        if (hits !== 0) {
-            var _iteratorNormalCompletion3 = true;
-            var _didIteratorError3 = false;
-            var _iteratorError3 = undefined;
-
-            try {
-                for (var _iterator3 = matches[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                    var temp = _step3.value;
-
-                    var kmer = temp._id.kmer;
-                    var sequence = temp._id.sequence;
-                    var match = templates.get(sequence);
-                    var tCount = match ? match.tScore : 0;
-                    var uCount = match ? match.uScore : 0;
-                    tCount += kmerMap.get(kmer);
-                    uCount += 1;
-                    templates.set(sequence, {
-                        tScore: tCount, uScore: uCount
-                    });
-                }
-                // Get unique, total lenghts & species per match
-            } catch (err) {
-                _didIteratorError3 = true;
-                _iteratorError3 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                        _iterator3.return();
-                    }
-                } finally {
-                    if (_didIteratorError3) {
-                        throw _iteratorError3;
-                    }
-                }
-            }
-
-            query = {
-                sequence: {
-                    $in: Array.from(templates.keys())
-                }
-            };
-            var projection = {
-                id: '$sequence', lengths: 1, ulenght: 1,
-                species: 1, _id: 0
-            };
-            return kmerDB.aggregate({ $match: query }).project(projection).exec();
-        } else {
-            throw new Error('No hits were found!');
-        }
-    }).then(function (sequences) {
-        var _iteratorNormalCompletion4 = true;
-        var _didIteratorError4 = false;
-        var _iteratorError4 = undefined;
-
-        try {
-            for (var _iterator4 = sequences[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                var seq = _step4.value;
-
-                var vals = templates.get(seq.id);
-                vals.lengths = seq.lengths;
-                vals.ulength = seq.ulenght;
-                vals.species = seq.species;
-                templates.set(seq.id, vals);
-            }
-        } catch (err) {
-            _didIteratorError4 = true;
-            _iteratorError4 = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                    _iterator4.return();
-                }
-            } finally {
-                if (_didIteratorError4) {
-                    throw _iteratorError4;
-                }
-            }
-        }
-
-        return {
-            templates: templates,
-            hits: hits
-        };
-    });
-}
-/**
- * [findKmersTemplate Queries DB for matche's kmers]
- * @param  {[String]} template [Sequence template]
- * @return {[Array]}           [Array of kmers]
- */
-function findKmersTemplate(template, collection) {
-    var kmerDB = _mongoose2.default.model(collection, kmerSchema, collection);
-    return kmerDB.findOne({ sequence: template }, { reads: 1 }).exec();
 }
 
 /**
@@ -735,6 +278,7 @@ function sortKmerResults(a, b) {
     // a must be equal to b
     return 0;
 }
+
 /**
  * [sortKmerMatches Sort Matches by Hits (= Score)]
  * @param  {[type]} a [Match]
@@ -753,18 +297,16 @@ function sortKmerMatches(a, b) {
 }
 
 function firstMatch(kmerObject, kmerMap) {
+    var start = (0, _performanceNow2.default)();
     kmerObject.redis.select(1);
-    console.log('firstMatching!');
     return kmerObject.redis.hgetallAsync('Summary').then(function (summary) {
-        console.log(summary);
         kmerObject.redis.select(0);
         kmerObject.summary = {
             templates: +summary.templates,
             totalLen: +summary.totalLen,
             uniqueLens: +summary.uniqueLens
         };
-        console.log('summary ready!');
-        return findKmersMatchesRedis(kmerMap, kmerObject.redis);
+        return findKmersMatchesRedis(kmerMap, kmerObject.redis, start);
     });
 }
 
@@ -778,6 +320,7 @@ function winnerScoring(kmerObject, kmerMap) {
     var hitCounter = 0;
     var notFound = true;
     var kmerResults = [];
+    var start = (0, _performanceNow2.default)();
 
     function findWinner(results) {
         var templates = [].concat(_toConsumableArray(results.templates)).sort(sortKmerMatches);
@@ -835,13 +378,13 @@ function winnerScoring(kmerObject, kmerMap) {
 
         kmerObject.firstMatches.forEach(function (hit, sequence) {
             var template = templates.get(sequence);
-            var _iteratorNormalCompletion5 = true;
-            var _didIteratorError5 = false;
-            var _iteratorError5 = undefined;
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
 
             try {
-                for (var _iterator5 = hit.kmers[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                    var kmer = _step5.value;
+                for (var _iterator2 = hit.kmers[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var kmer = _step2.value;
 
                     if (kmerQueryMap.has(kmer)) {
                         var kmerCoverage = kmerQueryMap.get(kmer);
@@ -863,16 +406,16 @@ function winnerScoring(kmerObject, kmerMap) {
                     }
                 }
             } catch (err) {
-                _didIteratorError5 = true;
-                _iteratorError5 = err;
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                        _iterator5.return();
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
                     }
                 } finally {
-                    if (_didIteratorError5) {
-                        throw _iteratorError5;
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
                     }
                 }
             }
@@ -898,10 +441,11 @@ function winnerScoring(kmerObject, kmerMap) {
             var winnerKmers = findWinner(results);
             removeWinnerKmers(winnerKmers);
         }
+        var end = (0, _performanceNow2.default)();
+        kmerObject.wtaTime = end - start;
         if (kmerResults.length === 0) {
             throw new Error('No hits were found! (kmerResults.length === 0)');
         }
-        console.log('kmerMapSize...', kmerObject.kmerMapSize);
         return kmerResults;
     };
 
@@ -916,37 +460,43 @@ function winnerScoring(kmerObject, kmerMap) {
  */
 function standardScoring(kmerObject, kmerMap) {
     var kmerResults = [];
-    return Promise.all([_mongoose2.default.model('Summary', kmerSummarySchema, 'Summary').findOne({ templates: { $gt: 1 } }, { _id: 0 }).exec(), findMatchesMongoAggregation(kmerMap, kmerObject.db.url, kmerObject.collection, kmerObject.progress)]).then(function (_ref) {
+    return Promise.all([_mongoose2.default.model('Summary', kmerSummarySchema, 'Summary').findOne({
+        templates: {
+            $gt: 1
+        }
+    }, {
+        _id: 0
+    }).exec(), findMatchesMongoAggregation(kmerMap, kmerObject.db.url, kmerObject.collection, kmerObject.progress)]).then(function (_ref) {
         var _ref2 = _slicedToArray(_ref, 2);
 
         var summary = _ref2[0];
         var results = _ref2[1];
 
         kmerObject.firstMatches = results.templates;
-        var _iteratorNormalCompletion6 = true;
-        var _didIteratorError6 = false;
-        var _iteratorError6 = undefined;
+        var _iteratorNormalCompletion3 = true;
+        var _didIteratorError3 = false;
+        var _iteratorError3 = undefined;
 
         try {
-            for (var _iterator6 = results.templates[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-                var _step6$value = _slicedToArray(_step6.value, 2);
+            for (var _iterator3 = results.templates[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                var _step3$value = _slicedToArray(_step3.value, 2);
 
-                var sequence = _step6$value[0];
-                var match = _step6$value[1];
+                var sequence = _step3$value[0];
+                var match = _step3$value[1];
 
                 kmerResults.push(matchSummary(kmerObject, sequence, match, results, summary));
             }
         } catch (err) {
-            _didIteratorError6 = true;
-            _iteratorError6 = err;
+            _didIteratorError3 = true;
+            _iteratorError3 = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                    _iterator6.return();
+                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                    _iterator3.return();
                 }
             } finally {
-                if (_didIteratorError6) {
-                    throw _iteratorError6;
+                if (_didIteratorError3) {
+                    throw _iteratorError3;
                 }
             }
         }
@@ -989,17 +539,24 @@ var KmerFinderServer = exports.KmerFinderServer = function (_KmerJS) {
 
         var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(KmerFinderServer).call(this, fastq, preffix, length, step, coverage, progress, 'node'));
 
-        console.log(url);
-        console.log(url.substring(8, 22));
-        console.log(+url.substring(23, 28));
-        _this.redis = _redis2.default.createClient({ host: url.substring(8, 22), port: +url.substring(23, 28), url: url });
-        _this.redis.on("error", function (err) {
+        _this.redis = _redis2.default.createClient({
+            host: url.substring(8, 22),
+            port: +url.substring(23, 28),
+            url: url
+        });
+        _this.redis.on('error', function (err) {
             throw new Error(err);
         });
         _this.method = method;
         _this.collection = collection;
         _this.firstMatches = new Map();
         _this.maxHits = maxHits;
+        _this.totalTime = 0.0;
+        _this.dbQueryTime = 0.0;
+        _this.wtaTime = 0.0;
+        _this.fileSize = 0;
+        _this.kmerMapSize = 0;
+        _this.reducedDBSize = 0;
         return _this;
     }
     /**
@@ -1045,6 +602,16 @@ var KmerFinderServer = exports.KmerFinderServer = function (_KmerJS) {
         key: 'findMatchesTest',
         value: function findMatchesTest(kmerMap) {
             return winnerScoring(this, kmerMap);
+        }
+    }, {
+        key: 'kmerSize',
+        value: function kmerSize() {
+            return (0, _objectSizeof2.default)((0, _kmers.mapToJSON)(this.kmerMap));
+        }
+    }, {
+        key: 'firstDBSize',
+        value: function firstDBSize() {
+            return (0, _objectSizeof2.default)((0, _kmers.mapToJSON)(this.firstMatches));
         }
     }, {
         key: 'close',

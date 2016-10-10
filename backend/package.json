@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node -max_old_space_size=8192 server.js"
   },
   "author": "",
   "license": "ISC",
@@ -32,6 +32,10 @@
     "request": "",
     "resolve": "",
     "socket.io": "",
-    "redis": ""
+    "redis": "",
+    "socket.io-client": "^1.4.6",
+    "time": "^0.11.4",
+    "node-inspector": "^0.12.3",
+    "performance-now": "^0.2.0"
   }
 }

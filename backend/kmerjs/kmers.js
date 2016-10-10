@@ -23,10 +23,6 @@ var _bluebird = require('bluebird');
 
 var _bluebird2 = _interopRequireDefault(_bluebird);
 
-var _console = require('console');
-
-var _console2 = _interopRequireDefault(_console);
-
 var _stream = require('stream');
 
 var _stream2 = _interopRequireDefault(_stream);
@@ -39,13 +35,15 @@ var _progressStream = require('progress-stream');
 
 var _progressStream2 = _interopRequireDefault(_progressStream);
 
+var _performanceNow = require('performance-now');
+
+var _performanceNow2 = _interopRequireDefault(_performanceNow);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var fs = require('fs');
-// import events from 'events';
-
 var complementMap = exports.complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
 
 function objToStrMap(obj) {
@@ -94,6 +92,7 @@ function stringToMap(string) {
 function objectToMap(object) {
     return objToStrMap(object);
 }
+// Source: http://exploringjs.com/es6/ch_maps-sets.html
 function mapToJSON(strMap) {
     var obj = Object.create(null);
     var _iteratorNormalCompletion2 = true;
@@ -165,6 +164,7 @@ var KmerJS = exports.KmerJS = function () {
         if (env === 'browser') {
             this.fileDataRead = 0;
         }
+        this.kmerExtractTime = 0.0;
     }
     /**
      * [kmersInLine description]
@@ -196,12 +196,12 @@ var KmerJS = exports.KmerJS = function () {
     }, {
         key: 'readFile',
         value: function readFile() {
+            var start = (0, _performanceNow2.default)();
             var kmerObj = this;
             var str = (0, _progressStream2.default)({
                 time: 100 /* ms */
             });
             var promise = new _bluebird2.default(function (resolve) {
-
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
                 var liner = new _stream2.default.Transform({ objectMode: true });
                 liner._transform = function (chunk, encoding, done) {
@@ -210,10 +210,6 @@ var KmerJS = exports.KmerJS = function () {
                         data = this._lastLineData + data;
                     }
                     var lines = data.split('\n');
-                    // if (kmerObj.env === 'browser') {
-                    //     kmerObj.fileDataRead += chunk.length;
-                    //     eventEmmitter.emit('progress');
-                    // }
                     this._lastLineData = lines.splice(lines.length - 1, 1)[0];
 
                     lines.forEach(this.push.bind(this));
@@ -241,15 +237,16 @@ var KmerJS = exports.KmerJS = function () {
                     var line = void 0;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
-                            kmerObj.kmersInLine(line, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
-                            kmerObj.kmersInLine(complement(line), kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
-                            // [line, complement(line)].forEach(function (kmerLine) {
-                            //     kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap,
-                            //         kmerObj.length,kmerObj.preffix, kmerObj.step);
-                            // });
+                            // kmerObj.kmersInLine(line, kmerObj.kmerMap,
+                            //        kmerObj.length,kmerObj.preffix, kmerObj.step);
+                            // kmerObj.kmersInLine(complement(line), kmerObj.kmerMap,
+                            //       kmerObj.length,kmerObj.preffix, kmerObj.step);
+                            [line, complement(line)].forEach(function (kmerLine) {
+                                kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
+                            });
                         } else if (i === 3) {
-                                i = -1;
-                            }
+                            i = -1;
+                        }
                         i += 1;
                         lines += 1;
                         kmerObj.lines = lines;
@@ -260,6 +257,8 @@ var KmerJS = exports.KmerJS = function () {
                     }
                 });
                 liner.on('end', function () {
+                    var end = (0, _performanceNow2.default)();
+                    kmerObj.kmerExtractTime = end - start;
                     // Clean up progress output
                     if (kmerObj.env === 'node' && kmerObj.progress) {
                         process.stdout.write('\n                               \n');

@@ -1,6 +1,7 @@
 <div
     role="button"
-    ngf-drop ngf-select
+    ngf-drop="dropping($files)"
+    ngf-select="dropping($files)"
     ng-model="isolateFiles"
     class="drop-box"
     ngf-drag-over-class="dragover"
