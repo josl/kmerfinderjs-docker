@@ -9,30 +9,52 @@
  */
 angular.module('cgeUploaderApp')
   .controller('KmerFinderCtrl', [
-      '$scope', 'API', '$http',
-      function ($scope, API) {
+      '$scope', 'API', '$q',
+      function ($scope, API, $q) {
           console.log(API);
-          $scope.isolateFiles = [];
+          $scope.isolateFilesPromises = [];
           $scope.matches = false;
           $scope.error = false;
           $scope.message = {text: '', status: 0};
-          $scope.$on('newFile', function (event, file){
-              console.log(event);
+
+          $scope.$on('startParsing', function (event, files){
+              var index = -1;
+              var parseFiles = function() {
+                  console.log(index, files.length - 1, files);
+                  if (index >= files.length - 1) {
+                    return;
+                } else {
+                    index++;
+                    return $scope.parseFile(files[index])
+                                 .then(parseFiles)
+                                 .catch(function (error) {
+                                      console.log('ERROR!!', error);
+                                      $scope.message.text = error;
+                                      $scope.message.status = 2;
+                                      $scope.$apply();
+                                  });
+                }
+
+              };
+              parseFiles();
+          });
+          $scope.parseFile = function(file) {
+              console.log(file);
               var kmerjs = new kmerModule.KmerFinderClient(
                   file, 'browser', 'ATGAC', 16, 1, 1, true, 'server',
                   API.url + 'kmers', '', 'KmerBacteria', 'Kmers');
               $scope.fileProgress = kmerjs.lines;
-              // Own reading file function
-              console.log(kmerjs);
-              console.log('reading!');
               var kmerObj = kmerjs.findKmers();
+
               kmerObj.event.on('progress', function(progress) {
+                //   console.log(progress.transferred, file.size);
                   file.kmerSize = kmerjs.kmerMap.size;
                   file.dataRead = progress.transferred * 100 / file.size;
                   $scope.$apply();
+
               });
 
-              kmerObj.promise
+              return kmerObj.promise
                 .then(function (kmers) {
                     console.log('Assigning kmers!');
                     file.kmers = kmers;
@@ -56,12 +78,7 @@ angular.module('cgeUploaderApp')
                         }
                     }
                     run(generator);
-                })
-                .catch(function (error) {
-                    console.log('ERROR!!', error);
-                    $scope.message.text = error;
-                    $scope.message.status = 2;
-                    $scope.$apply();
+                    return;
                 });
-          });
+          };
   }]);
