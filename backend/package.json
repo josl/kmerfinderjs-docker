@@ -28,6 +28,7 @@
     "mongodb-es6": "",
     "mongoose": "",
     "progress-stream": "",
+    "object-sizeof": "^1.1.1",
     "readline2": "",
     "request": "",
     "resolve": "",
