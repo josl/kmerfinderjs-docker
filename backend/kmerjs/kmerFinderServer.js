@@ -451,7 +451,7 @@ function winnerScoring(kmerObject, kmerMap) {
                 nHits += template.nKmers;
                 // nHits += template.kmers.size;
             } else {
-                    // delete kmerObject.firstMatches[sequence];
+                    delete kmerObject.firstMatches[sequence];
                     // kmerObject.firstMatches.delete(sequence);
                 }
         }
