@@ -11,9 +11,11 @@ var _performanceNow = require('performance-now');
 
 var _performanceNow2 = _interopRequireDefault(_performanceNow);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+var _objectSizeof = require('object-sizeof');
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+var _objectSizeof2 = _interopRequireDefault(_objectSizeof);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var cli = require('cli');
 
@@ -43,18 +45,20 @@ cli.main(function (args, options) {
         (function () {
             var start = (0, _performanceNow2.default)();
             kmerjs.findKmers().then(function (kmerMap) {
-                var keys = [].concat(_toConsumableArray(kmerMap.keys()));
-                if (options.output) {
-                    _console2.default.log('Kmers: ', keys.length);
-                }
+                // let keys = [...kmerMap.keys()];
+                // if (options.output) {
+                //     Console.log('Kmers: ', keys.length);
+                // }
                 kmerjs.findMatches(kmerMap).then(function () {
                     var end = (0, _performanceNow2.default)();
                     kmerjs.totalTime = end - start;
                     // let header = `file_name\ttotal_time\tkmer_extract_time\twta_time\n`;
                     // process.stdout.write(header);
                     if (options.time) {
-                        var kmerMapSize = kmerjs.kmerSize();
-                        var reducedDBSize = kmerjs.firstDBSize();
+                        var kmerMapSize = (0, _objectSizeof2.default)(kmerjs.kmerMap);
+                        // let kmerMapSize = kmerjs.kmerSize();
+                        var reducedDBSize = (0, _objectSizeof2.default)(kmerjs.firstMatches);
+                        // let reducedDBSize = kmerjs.firstDBSize();
                         var kb = Math.pow(2, 10);
                         var mb = Math.pow(2, 20);
                         // let timeInfo = `${kmerjs.fastq}\t${kmerjs.totalTime/1000}\t${kmerjs.kmerExtractTime/1000}\t${kmerjs.wtaTime/1000}\t${kmerMapSize/kb} (Kb)/${kmerMapSize/mb} (Mb)\t${reducedDBSize/kb} (Kb)/${reducedDBSize/mb} (Mb)\n`;

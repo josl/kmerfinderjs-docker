@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.KmerJS = exports.complementMap = undefined;
+exports.KmerJS = undefined;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -44,7 +44,23 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var fs = require('fs');
-var complementMap = exports.complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
+
+
+// export let complementMap = new Map([
+//     ['A', 'T'],
+//     ['T', 'A'],
+//     ['G', 'C'],
+//     ['C', 'G']
+// ]);
+
+var complementMap = {
+    'A': 'T',
+    'T': 'A',
+    'G': 'C',
+    'C': 'G'
+};
+
+var regex = /[ATGC]/g;
 
 function objToStrMap(obj) {
     var strMap = new Map();
@@ -80,10 +96,25 @@ function jsonToStrMap(jsonStr) {
     return objToStrMap(jsonStr);
 }
 
+// Source:
+// http://eddmann.com/posts/ten-ways-to-reverse-a-string-in-javascript/
+String.prototype.reverse = function () {
+    var i,
+        s = '';
+    for (i = this.length; i >= 0; i--) {
+        s += this.charAt(i);
+    }
+    return s;
+};
+
 function complement(string) {
-    return string.replace(/[ATGC]/g, function (match) {
-        return complementMap.get(match);
-    }).split('').reverse().join('');
+    return string.replace(regex, function (match) {
+        return complementMap[match];
+        // return complementMap.get(match);
+    }).reverse();
+    // .split('')
+    // .reverse()
+    // .join('');
 }
 
 function stringToMap(string) {
@@ -158,7 +189,8 @@ var KmerJS = exports.KmerJS = function () {
         this.progress = progress;
         this.coverage = coverage;
         this.evalue = new _bignumber2.default(0.05);
-        this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
+        this.kmerMap = Object.create(null);
+        // this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
         this.kmerMapSize = 0;
         this.env = env;
         if (env === 'browser') {
@@ -182,7 +214,9 @@ var KmerJS = exports.KmerJS = function () {
             for (var index = 0; index <= stop; index += 1) {
                 var kmer = line.substring(ini, end);
                 if (kmer.startsWith(this.preffix)) {
-                    this.kmerMap.set(kmer, (this.kmerMap.get(kmer) || 0) + 1);
+                    this.kmerMap[kmer] = (this.kmerMap[kmer] || 0) + 1;
+                    this.kmerMapSize += 1;
+                    // this.kmerMap.set(kmer, (this.kmerMap.get(kmer) || 0) + 1);
                 }
                 ini += this.step;
                 end = ini + this.kmerLength;
@@ -222,12 +256,16 @@ var KmerJS = exports.KmerJS = function () {
                     this._lastLineData = null;
                     done();
                 };
-
                 if (kmerObj.env === 'node') {
-                    fs.createReadStream(kmerObj.fastq).pipe(str).pipe(liner);
+                    fs.createReadStream(kmerObj.fastq).pipe(liner);
                 } else if (kmerObj.env === 'browser') {
-                    (0, _filereaderStream2.default)(kmerObj.fastq).pipe(str).pipe(liner);
+                    (0, _filereaderStream2.default)(kmerObj.fastq).pipe(liner);
                 }
+                // if (kmerObj.env === 'node'){
+                //     fs.createReadStream(kmerObj.fastq).pipe(str).pipe(liner);
+                // }else if (kmerObj.env === 'browser') {
+                //     fileReaderStream(kmerObj.fastq).pipe(str).pipe(liner);
+                // }
                 var i = 0;
                 var lines = 0;
                 kmerObj.lines = 0;
@@ -251,7 +289,7 @@ var KmerJS = exports.KmerJS = function () {
                         lines += 1;
                         kmerObj.lines = lines;
                         if (kmerObj.env === 'node' && kmerObj.progress) {
-                            var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMap.size + '\r';
+                            var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMapSize + '\r';
                             process.stdout.write(progress);
                         }
                     }
@@ -263,7 +301,8 @@ var KmerJS = exports.KmerJS = function () {
                     if (kmerObj.env === 'node' && kmerObj.progress) {
                         process.stdout.write('\n                               \n');
                     }
-                    kmerObj.kmerMapSize = kmerObj.kmerMap.size;
+                    // kmerObj.kmerMapSize = Object.keys(kmerObj.kmerMap).length;
+                    // kmerObj.kmerMapSize = kmerObj.kmerMap.size;
                     resolve(kmerObj.kmerMap);
                 });
             });

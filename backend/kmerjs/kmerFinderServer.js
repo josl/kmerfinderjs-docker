@@ -83,31 +83,53 @@ var kmerMapSchema = new Schema({
 });
 
 function findKmersMatchesRedis(kmerMap, client, start) {
-    var kmerQuery = [].concat(_toConsumableArray(kmerMap.keys()));
-    var templates = new Map();
+    var kmerQuery = Object.keys(kmerMap);
+    // let kmerQuery = [...kmerMap.keys()];
+    // let templates = new Map();
+    var templates = Object.create(null);;
     var nHits = 0;
 
     function updateMatches(matchTemplates, index) {
         var kmer = kmerQuery[index];
         nHits += matchTemplates.length;
-        var kmerCoverage = kmerMap.get(kmer);
+        var kmerCoverage = kmerMap[kmer];
+        // let kmerCoverage = kmerMap.get(kmer);
         matchTemplates.forEach(function (template) {
             template = JSON.parse(template);
-            var sequence = templates.get(template.sequence);
+            var sequence = templates[template.sequence];
             if (sequence !== undefined) {
                 sequence.tScore += kmerCoverage;
                 sequence.uScore += 1;
-                sequence.kmers.add(kmer);
+                if (!(kmer in sequence.kmers)) {
+                    sequence.kmers[kmer] = 1;
+                }
+                // sequence.kmers.add(kmer);
             } else {
-                templates.set(template.sequence, {
-                    tScore: kmerCoverage,
-                    uScore: 1,
-                    lengths: template.lengths,
-                    ulength: template.ulengths,
-                    species: template.species,
-                    kmers: new Set([kmer])
-                });
-            }
+                    templates[template.sequence] = {
+                        tScore: kmerCoverage,
+                        uScore: 1,
+                        lengths: template.lengths,
+                        ulength: template.ulengths,
+                        species: template.species,
+                        kmers: { kmer: 1 }
+                        // kmers: new Set([kmer])
+                    };
+                }
+            // let sequence = templates.get(template.sequence);
+            // if (sequence !== undefined) {
+            //     sequence.tScore += kmerCoverage;
+            //     sequence.uScore += 1;
+            //     sequence.kmers.add(kmer);
+            // } else {
+            //     templates.set(template.sequence, {
+            //         tScore: kmerCoverage,
+            //         uScore: 1,
+            //         lengths: template.lengths,
+            //         ulength: template.ulengths,
+            //         species: template.species,
+            //         kmers: new Set([kmer])
+            //     });
+            // }
         });
     }
 
@@ -242,7 +264,8 @@ function findMatchesMongoAggregation(kmerMap, conn, collection) {
 function matchSummary(kmerObject, sequence, match, results, summary) {
     var minScore = 0;
     var kmerQuerySize = kmerObject.kmerMapSize;
-    var sequenceHit = kmerObject.firstMatches.get(sequence);
+    var sequenceHit = kmerObject.firstMatches[sequence];
+    // let sequenceHit = kmerObject.firstMatches.get(sequence);
     var originalUScore = sequenceHit.uScore;
     var originalTScore = sequenceHit.tScore;
     var matchUScore = match.uScore;
@@ -323,7 +346,10 @@ function winnerScoring(kmerObject, kmerMap) {
     var start = (0, _performanceNow2.default)();
 
     function findWinner(results) {
-        var templates = [].concat(_toConsumableArray(results.templates)).sort(sortKmerMatches);
+        var templates = Object.keys(results.templates).map(function (key) {
+            return [key, results.templates[key]];
+        }).sort(sortKmerMatches);
+        // let templates = [...results.templates].sort(sortKmerMatches);
         if (hitCounter === 0) {
             kmerObject.firstMatches = results.templates;
             if (kmerObject.progress) {
@@ -362,9 +388,12 @@ function winnerScoring(kmerObject, kmerMap) {
     function removeWinnerKmers(matchKmers) {
         if (matchKmers) {
             // remove all kmers in best hit from kmerMap
-            matchKmers.forEach(function (kmer) {
-                kmerMap.delete(kmer);
-            });
+            for (var kmer in matchKmers) {
+                // matchKmers.forEach(function (kmer) {
+                delete kmerMap[kmer];
+                // kmerMap.delete(kmer);
+            }
+            // });
             return;
         } else {
             notFound = false;
@@ -373,59 +402,59 @@ function winnerScoring(kmerObject, kmerMap) {
     }
 
     function getMatches(kmerObject, kmerQueryMap) {
-        var templates = new Map();
+        // let templates = new Map();
+        var templates = Object.create(null);
         var nHits = 0;
 
-        kmerObject.firstMatches.forEach(function (hit, sequence) {
-            var template = templates.get(sequence);
-            var _iteratorNormalCompletion2 = true;
-            var _didIteratorError2 = false;
-            var _iteratorError2 = undefined;
-
-            try {
-                for (var _iterator2 = hit.kmers[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                    var kmer = _step2.value;
-
-                    if (kmerQueryMap.has(kmer)) {
-                        var kmerCoverage = kmerQueryMap.get(kmer);
-                        if (template !== undefined) {
-                            template.tScore += kmerCoverage;
-                            template.uScore += 1;
-                            template.kmers.add(kmer);
-                        } else {
-                            templates.set(sequence, {
+        for (var sequence in kmerObject.firstMatches) {
+            var _hit = kmerObject.firstMatches[sequence];
+            // kmerObject.firstMatches.forEach(function (hit, sequence) {
+            // let template = templates.get(sequence);
+            var template = templates[sequence];
+            var kmerCoverage = 0;
+            for (var kmer in _hit.kmers) {
+                // for (const kmer of hit.kmers){
+                if (kmerCoverage = kmerQueryMap[kmer]) {
+                    // let kmerCoverage = kmerQueryMap.get(kmer);
+                    if (template !== undefined) {
+                        template.tScore += kmerCoverage;
+                        template.uScore += 1;
+                        if (!(kmer in template.kmers)) {
+                            template.kmers[kmer] = 1;
+                            template.nKmers += 1;
+                        }
+                        // template.kmers.add(kmer);
+                    } else {
+                            templates[sequence] = {
                                 tScore: kmerCoverage,
                                 uScore: 1,
-                                lengths: hit.lengths,
-                                ulength: hit.ulength,
-                                species: hit.species,
-                                kmers: new Set([kmer])
-                            });
-                            template = templates.get(sequence);
+                                lengths: _hit.lengths,
+                                ulength: _hit.ulength,
+                                species: _hit.species,
+                                kmers: { kmer: 1 },
+                                nKmers: 1
+                            };
+                            // templates.set(sequence, {
+                            //     tScore: kmerCoverage,
+                            //     uScore: 1,
+                            //     lengths: hit.lengths,
+                            //     ulength: hit.ulength,
+                            //     species: hit.species,
+                            //     kmers: new Set([kmer])
+                            // });
+                            template = templates[sequence];
+                            // template = templates.get(sequence);
                         }
-                    }
-                }
-            } catch (err) {
-                _didIteratorError2 = true;
-                _iteratorError2 = err;
-            } finally {
-                try {
-                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                        _iterator2.return();
-                    }
-                } finally {
-                    if (_didIteratorError2) {
-                        throw _iteratorError2;
-                    }
                 }
             }
-
             if (template !== undefined) {
-                nHits += template.kmers.size;
+                nHits += template.nKmers;
+                // nHits += template.kmers.size;
             } else {
-                kmerObject.firstMatches.delete(sequence);
-            }
-        });
+                    // delete kmerObject.firstMatches[sequence];
+                    // kmerObject.firstMatches.delete(sequence);
+                }
+        }
         if (nHits === 0) {
             throw new Error('No hits were found! (nHits === 0)');
         }
@@ -473,30 +502,30 @@ function standardScoring(kmerObject, kmerMap) {
         var results = _ref2[1];
 
         kmerObject.firstMatches = results.templates;
-        var _iteratorNormalCompletion3 = true;
-        var _didIteratorError3 = false;
-        var _iteratorError3 = undefined;
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
 
         try {
-            for (var _iterator3 = results.templates[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                var _step3$value = _slicedToArray(_step3.value, 2);
+            for (var _iterator2 = results.templates[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                var _step2$value = _slicedToArray(_step2.value, 2);
 
-                var sequence = _step3$value[0];
-                var match = _step3$value[1];
+                var sequence = _step2$value[0];
+                var match = _step2$value[1];
 
                 kmerResults.push(matchSummary(kmerObject, sequence, match, results, summary));
             }
         } catch (err) {
-            _didIteratorError3 = true;
-            _iteratorError3 = err;
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                    _iterator3.return();
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                    _iterator2.return();
                 }
             } finally {
-                if (_didIteratorError3) {
-                    throw _iteratorError3;
+                if (_didIteratorError2) {
+                    throw _iteratorError2;
                 }
             }
         }
