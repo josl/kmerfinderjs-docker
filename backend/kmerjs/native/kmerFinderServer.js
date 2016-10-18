@@ -1,6 +1,6 @@
 /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush", "emit"] }] */
 let Console = require('console');
-let stats = require('./stats');
+let stats = require('./stats.js');
 let zScore = stats.zScore;
 let fastp = stats.fastp;
 let etta = stats.etta;
