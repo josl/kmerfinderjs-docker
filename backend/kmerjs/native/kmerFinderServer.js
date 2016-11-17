@@ -508,16 +508,16 @@ class KmerFinderServer extends KmerJS {
             url = 'mongodb:\/\/localhost:27017/Kmers', collection = 'genomes',
             method = 'standard', maxHits = 100) {
             super(fastq, preffix, length, step, coverage, progress, 'node');
-            this.redis = redis.createClient({
-                host: '127.0.0.1',
-                port: 6379,
-                url: 'redis://127.0.0.1:6379'
-            });
             // this.redis = redis.createClient({
-            //     host: url.substring(8, 22),
-            //     port: +url.substring(23, 28),
-            //     url: url
+            //     host: '127.0.0.1',
+            //     port: 6379,
+            //     url: 'redis://127.0.0.1:6379'
             // });
+            this.redis = redis.createClient({
+                host: url.substring(8, 14),
+                port: +url.substring(14, 28),
+                url: url
+            });
             this.redis.on('error', function (err) {
                 throw new Error(err);
             });
