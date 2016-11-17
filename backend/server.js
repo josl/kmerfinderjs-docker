@@ -90,7 +90,8 @@ app.post('/kmers', textParser, function (req, res) {
             var jsonMatches = [];
             var kmerMap = kmers;
             console.log(kmerMap.db, kmerMap.collection);
-            var kmerObj = new kmerFinder.KmerFinderServer(
+            var kmerObj = new kmerFinder(
+            // var kmerObj = new kmerFinder.KmerFinderServer(
                 '',
                 'ATGAC', 16, 1, 1, false, 'mongo',
                 'redis://redis:' + process.env.PORT,
