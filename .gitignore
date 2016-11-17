@@ -8,3 +8,4 @@ database/*
 /frontend/.tmp/*
 /frontend/app/scripts/config.js
 docker-compose-prod.yml
+appendonly.aof

@@ -67,7 +67,8 @@ function findKmersMatchesRedis(kmerMap, client, start) {
                     tScore: kmerCoverage,
                     uScore: 1,
                     lengths: template.lengths,
-                    ulength: template.ulengths,
+                    ulength: template.ulenght,
+                    // ulength: template.ulengths,
                     species: template.species,
                     kmers: {kmer : 1}
                 };
@@ -305,11 +306,13 @@ function sortKmerMatches(a, b) {
 
 function firstMatch(kmerObject, kmerMap) {
     let start = now();
-    kmerObject.redis.select(1);
+    kmerObject.redis.select(3);
+    // kmerObject.redis.select(1);
     return kmerObject.redis
         .hgetallAsync('Summary')
         .then(function (summary) {
-            kmerObject.redis.select(0);
+            kmerObject.redis.select(2);
+            // kmerObject.redis.select(0);
             kmerObject.summary = {
                 templates: +summary.templates,
                 totalLen: +summary.totalLen,
@@ -506,10 +509,15 @@ class KmerFinderServer extends KmerJS {
             method = 'standard', maxHits = 100) {
             super(fastq, preffix, length, step, coverage, progress, 'node');
             this.redis = redis.createClient({
-                host: url.substring(8, 22),
-                port: +url.substring(23, 28),
-                url: url
+                host: '127.0.0.1',
+                port: 6379,
+                url: 'redis://127.0.0.1:6379'
             });
+            // this.redis = redis.createClient({
+            //     host: url.substring(8, 22),
+            //     port: +url.substring(23, 28),
+            //     url: url
+            // });
             this.redis.on('error', function (err) {
                 throw new Error(err);
             });
