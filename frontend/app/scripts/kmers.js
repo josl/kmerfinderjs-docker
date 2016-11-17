@@ -2,11 +2,6 @@
 (function (process){
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.KmerJS = exports.complementMap = undefined;
-
 var _createClass = function () {
     function defineProperties(target, props) {
         for (var i = 0; i < props.length; i++) {
@@ -41,41 +36,7 @@ var _slicedToArray = function () {
             throw new TypeError("Invalid attempt to destructure non-iterable instance");
         }
     };
-}(); /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
-
-exports.jsonToStrMap = jsonToStrMap;
-exports.complement = complement;
-exports.stringToMap = stringToMap;
-exports.objectToMap = objectToMap;
-exports.mapToJSON = mapToJSON;
-
-var _bignumber = require('bignumber.js');
-
-var _bignumber2 = _interopRequireDefault(_bignumber);
-
-var _bluebird = require('bluebird');
-
-var _bluebird2 = _interopRequireDefault(_bluebird);
-
-var _stream = require('stream');
-
-var _stream2 = _interopRequireDefault(_stream);
-
-var _filereaderStream = require('filereader-stream');
-
-var _filereaderStream2 = _interopRequireDefault(_filereaderStream);
-
-var _progressStream = require('progress-stream');
-
-var _progressStream2 = _interopRequireDefault(_progressStream);
-
-var _performanceNow = require('performance-now');
-
-var _performanceNow2 = _interopRequireDefault(_performanceNow);
-
-function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : { default: obj };
-}
+}();
 
 function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -83,8 +44,24 @@ function _classCallCheck(instance, Constructor) {
     }
 }
 
+/* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
+
+var BN = require('bignumber.js');
+var Promise = require('bluebird');
+var stream = require('stream');
 var fs = require('fs');
-var complementMap = exports.complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
+var fileReaderStream = require('filereader-stream');
+var progressEvent = require('progress-stream');
+var now = require('performance-now');
+
+var complementMap = {
+    'A': 'T',
+    'T': 'A',
+    'G': 'C',
+    'C': 'G'
+};
+
+var regex = /[ATGC]/g;
 
 function objToStrMap(obj) {
     var strMap = new Map();
@@ -120,10 +97,32 @@ function jsonToStrMap(jsonStr) {
     return objToStrMap(jsonStr);
 }
 
+// Source:
+// http://eddmann.com/posts/ten-ways-to-reverse-a-string-in-javascript/
+String.prototype.reverse = function () {
+    // let s = this;
+    // let o = '';
+    // for (var i = s.length - 1; i >= 0; i--){
+    //   o += s[i];
+    // }
+    // return o;
+    var s = this;
+    s = s.split('');
+    var len = s.length,
+        halfIndex = Math.floor(len / 2) - 1,
+        tmp;
+    for (var i = 0; i <= halfIndex; i++) {
+        tmp = s[len - i - 1];
+        s[len - i - 1] = s[i];
+        s[i] = tmp;
+    }
+    return s.join('');
+};
+
 function complement(string) {
-    return string.replace(/[ATGC]/g, function (match) {
-        return complementMap.get(match);
-    }).split('').reverse().join('');
+    return string.replace(regex, function (match) {
+        return complementMap[match];
+    }).reverse();
 }
 
 function stringToMap(string) {
@@ -168,7 +167,7 @@ function mapToJSON(strMap) {
     return obj;
 }
 
-var KmerJS = exports.KmerJS = function () {
+var KmerJS = function () {
     /**
      * [constructor description]
      * @param  {[type]} preffix  =             'ATGAC' [Filter kmers starting with]
@@ -197,8 +196,8 @@ var KmerJS = exports.KmerJS = function () {
         this.step = step;
         this.progress = progress;
         this.coverage = coverage;
-        this.evalue = new _bignumber2.default(0.05);
-        this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
+        this.evalue = new BN(0.05);
+        this.kmerMap = Object.create(null); // {16-mer: times found in line}
         this.kmerMapSize = 0;
         this.env = env;
         if (env === 'browser') {
@@ -221,7 +220,8 @@ var KmerJS = exports.KmerJS = function () {
             for (var index = 0; index <= stop; index += 1) {
                 var kmer = line.substring(ini, end);
                 if (kmer.startsWith(this.preffix)) {
-                    this.kmerMap.set(kmer, (this.kmerMap.get(kmer) || 0) + 1);
+                    this.kmerMap[kmer] = (this.kmerMap[kmer] || 0) + 1;
+                    this.kmerMapSize += 1;
                 }
                 ini += this.step;
                 end = ini + this.kmerLength;
@@ -235,14 +235,14 @@ var KmerJS = exports.KmerJS = function () {
     }, {
         key: 'readFile',
         value: function readFile() {
-            var start = (0, _performanceNow2.default)();
+            var start = now();
             var kmerObj = this;
-            var str = (0, _progressStream2.default)({
+            var str = progressEvent({
                 time: 100 /* ms */
             });
-            var promise = new _bluebird2.default(function (resolve) {
+            var promise = new Promise(function (resolve) {
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
-                var liner = new _stream2.default.Transform({ objectMode: true });
+                var liner = new stream.Transform({ objectMode: true });
                 liner._transform = function (chunk, encoding, done) {
                     var data = chunk.toString();
                     if (this._lastLineData) {
@@ -261,11 +261,15 @@ var KmerJS = exports.KmerJS = function () {
                     this._lastLineData = null;
                     done();
                 };
-
+                // if (kmerObj.env === 'node'){
+                //     fs.createReadStream(kmerObj.fastq).pipe(liner);
+                // }else if (kmerObj.env === 'browser') {
+                //     fileReaderStream(kmerObj.fastq).pipe(liner);
+                // }
                 if (kmerObj.env === 'node') {
                     fs.createReadStream(kmerObj.fastq).pipe(str).pipe(liner);
                 } else if (kmerObj.env === 'browser') {
-                    (0, _filereaderStream2.default)(kmerObj.fastq).pipe(str).pipe(liner);
+                    fileReaderStream(kmerObj.fastq).pipe(str).pipe(liner);
                 }
                 var i = 0;
                 var lines = 0;
@@ -276,10 +280,6 @@ var KmerJS = exports.KmerJS = function () {
                     var line = void 0;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
-                            // kmerObj.kmersInLine(line, kmerObj.kmerMap,
-                            //        kmerObj.length,kmerObj.preffix, kmerObj.step);
-                            // kmerObj.kmersInLine(complement(line), kmerObj.kmerMap,
-                            //       kmerObj.length,kmerObj.preffix, kmerObj.step);
                             [line, complement(line)].forEach(function (kmerLine) {
                                 kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
                             });
@@ -289,20 +289,19 @@ var KmerJS = exports.KmerJS = function () {
                         i += 1;
                         lines += 1;
                         kmerObj.lines = lines;
-                        if (kmerObj.env === 'node' && kmerObj.progress) {
-                            var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMap.size + '\r';
+                        if (kmerObj.env === 'node' && kmerObj.progress && false) {
+                            var progress = 'L: ' + lines + ' / K: ' + kmerObj.kmerMapSize + '\r';
                             process.stdout.write(progress);
                         }
                     }
                 });
                 liner.on('end', function () {
-                    var end = (0, _performanceNow2.default)();
+                    var end = now();
                     kmerObj.kmerExtractTime = end - start;
                     // Clean up progress output
                     if (kmerObj.env === 'node' && kmerObj.progress) {
                         process.stdout.write('\n                               \n');
                     }
-                    kmerObj.kmerMapSize = kmerObj.kmerMap.size;
                     resolve(kmerObj.kmerMap);
                 });
             });
@@ -315,6 +314,11 @@ var KmerJS = exports.KmerJS = function () {
 
     return KmerJS;
 }();
+
+module.exports = {
+    KmerJS: KmerJS, // (A)
+    mapToJSON: mapToJSON
+};
 
 }).call(this,require('_process'))
 },{"_process":47,"bignumber.js":2,"bluebird":3,"filereader-stream":5,"fs":35,"performance-now":22,"progress-stream":23,"stream":58}],2:[function(require,module,exports){

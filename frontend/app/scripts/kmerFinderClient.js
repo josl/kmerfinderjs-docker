@@ -711,16 +711,6 @@ function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : { default: obj };
 }
 
-function _toConsumableArray(arr) {
-    if (Array.isArray(arr)) {
-        for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-            arr2[i] = arr[i];
-        }return arr2;
-    } else {
-        return Array.from(arr);
-    }
-}
-
 function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
         throw new TypeError("Cannot call a class as a function");
@@ -767,7 +757,8 @@ function fromString(string) {
 function matchSummary(kmerObject, sequence, match, results, summary) {
     var minScore = 0;
     var kmerQuerySize = kmerObject.kmerMapSize;
-    var sequenceHit = kmerObject.firstMatches.get(sequence);
+    var sequenceHit = kmerObject.firstMatches[sequence];
+    // let sequenceHit = kmerObject.firstMatches.get(sequence);
     var originalUScore = sequenceHit.uScore;
     var originalTScore = sequenceHit.tScore;
     var matchUScore = match.uScore;
@@ -842,10 +833,13 @@ var KmerFinderClient = exports.KmerFinderClient = function (_KmerJS) {
             console.log(this);
             var that = this;
             var promise = new Promise(function (resolve, reject) {
-                kmerQuery.set('db', that.dbName);
-                kmerQuery.set('collection', that.collection);
-                console.log(kmerQuery.get('db'), kmerQuery.get('collection'));
-                fromString(JSON.stringify((0, _kmers.mapToJSON)(kmerQuery))).pipe(_request2.default.post(that.dbURL).on('response', function (response) {
+                kmerQuery['db'] = that.dbName;
+                kmerQuery['collection'] = that.collection;
+                // kmerQuery.set('db', that.dbName);
+                // kmerQuery.set('collection', that.collection);
+                // console.log(kmerQuery.get('db'), kmerQuery.get('collection'));
+                // fromString(JSON.stringify(mapToJSON(kmerQuery)))
+                fromString(JSON.stringify(kmerQuery)).pipe(_request2.default.post(that.dbURL).on('response', function (response) {
                     if (response.statusCode === 201 || response.statusCode === 200 || response.statusCode === 202) {
                         (function () {
                             console.log('resolving!');
@@ -857,10 +851,10 @@ var KmerFinderClient = exports.KmerFinderClient = function (_KmerJS) {
                             }).on('end', function () {
                                 var winner = JSON.parse(winnerData);
                                 console.log('Total data of reduced DB (bytes) ', totalData);
-                                winner.templates = (0, _kmers.jsonToStrMap)(winner.templates);
-                                winner.templates.forEach(function (hit, sequence) {
-                                    hit.kmers = new Set(hit.kmers);
-                                });
+                                //  winner.templates = jsonToStrMap(winner.templates);
+                                //  winner.templates.forEach(function (hit, sequence) {
+                                //      hit.kmers = new Set(hit.kmers);
+                                //  });
                                 console.log('resolving!');
                                 resolve(winner);
                             });
@@ -880,16 +874,18 @@ var KmerFinderClient = exports.KmerFinderClient = function (_KmerJS) {
         }
     }, {
         key: 'findMatches',
-        value: function findMatches(winner, kmerMap) {
+        value: function findMatches(firstWinner, kmerMap) {
             var _marked = [loop].map(regeneratorRuntime.mark);
 
             var hitCounter = 0;
             var notFound = true;
             // let kmerResults = [];
             var kmerObject = this;
+            var firstTime = true;
             function findWinner(results) {
                 console.log('Let\'s find the winner!');
-                var templates = [].concat(_toConsumableArray(results.templates)).sort(sortKmerMatches);
+                var templates = results.templates.sort(sortKmerMatches);
+                // let templates = [...results.templates].sort(sortKmerMatches);
                 if (hitCounter === 0) {
                     kmerObject.firstMatches = results.templates;
                     if (kmerObject.progress) {
@@ -927,73 +923,69 @@ var KmerFinderClient = exports.KmerFinderClient = function (_KmerJS) {
                     return;
                 }
             }
-
             function removeWinnerKmers(matchKmers) {
                 if (matchKmers) {
                     // remove all kmers in best hit from kmerMap
-                    matchKmers.forEach(function (kmer) {
-                        kmerMap.delete(kmer);
-                    });
+                    for (var kmer in matchKmers) {
+                        delete kmerMap[kmer];
+                    }
+                    // });
                     return;
                 } else {
+                    notFound = false;
                     return;
                 }
             }
 
+            // function removeWinnerKmers(matchKmers){
+            //     if (matchKmers){
+            //         // remove all kmers in best hit from kmerMap
+            //         matchKmers.forEach(function(kmer){
+            //             kmerMap.delete(kmer);
+            //         });
+            //         return;
+            //     }else{
+            //         return;
+            //     }
+            // }
+
             function getMatches(kmerObject, kmerQueryMap) {
-                var templates = new Map();
+                var templates = Object.create(null);
                 var nHits = 0;
 
-                kmerObject.firstMatches.forEach(function (hit, sequence) {
-                    var template = templates.get(sequence);
-                    var _iteratorNormalCompletion = true;
-                    var _didIteratorError = false;
-                    var _iteratorError = undefined;
-
-                    try {
-                        for (var _iterator = hit.kmers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                            var kmer = _step.value;
-
-                            if (kmerQueryMap.has(kmer)) {
-                                var kmerCoverage = kmerQueryMap.get(kmer);
-                                if (template !== undefined) {
-                                    template.tScore += kmerCoverage;
-                                    template.uScore += 1;
-                                    template.kmers.add(kmer);
-                                } else {
-                                    templates.set(sequence, {
-                                        tScore: kmerCoverage,
-                                        uScore: 1,
-                                        lengths: hit.lengths,
-                                        ulength: hit.ulength,
-                                        species: hit.species,
-                                        kmers: new Set([kmer])
-                                    });
-                                    template = templates.get(sequence);
+                for (var sequence in kmerObject.firstMatches) {
+                    var hit = kmerObject.firstMatches[sequence];
+                    var template = templates[sequence];
+                    var kmerCoverage = 0;
+                    for (var kmer in hit.kmers) {
+                        if (kmerCoverage = kmerQueryMap[kmer]) {
+                            if (template !== undefined) {
+                                template.tScore += kmerCoverage;
+                                template.uScore += 1;
+                                if (!(kmer in template.kmers)) {
+                                    template.kmers[kmer] = 1;
+                                    template.nKmers += 1;
                                 }
-                            }
-                        }
-                    } catch (err) {
-                        _didIteratorError = true;
-                        _iteratorError = err;
-                    } finally {
-                        try {
-                            if (!_iteratorNormalCompletion && _iterator.return) {
-                                _iterator.return();
-                            }
-                        } finally {
-                            if (_didIteratorError) {
-                                throw _iteratorError;
+                            } else {
+                                templates[sequence] = {
+                                    tScore: kmerCoverage,
+                                    uScore: 1,
+                                    lengths: hit.lengths,
+                                    ulength: hit.ulength,
+                                    species: hit.species,
+                                    kmers: { kmer: 1 },
+                                    nKmers: 1
+                                };
+                                template = templates[sequence];
                             }
                         }
                     }
-
                     if (template !== undefined) {
-                        nHits += template.kmers.size;
+                        nHits += template.nKmers;
                     } else {
-                        kmerObject.firstMatches.delete(sequence);
+                        delete kmerObject.firstMatches[sequence];
                     }
-                });
+                }
                 if (nHits === 0) {
                     throw new Error('No hits were found! (nHits === 0)');
                 }
@@ -1004,51 +996,57 @@ var KmerFinderClient = exports.KmerFinderClient = function (_KmerJS) {
             }
 
             function loop() {
-                var results, _winner;
-
+                var results, winner;
                 return regeneratorRuntime.wrap(function loop$(_context) {
                     while (1) {
                         switch (_context.prev = _context.next) {
                             case 0:
                                 if (!(notFound && hitCounter < kmerObject.maxHits)) {
-                                    _context.next = 9;
+                                    _context.next = 10;
                                     break;
                                 }
 
-                                // Find new matches from first matches.
-                                results = getMatches(kmerObject, kmerMap);
-                                _winner = findWinner(results);
+                                results = void 0;
 
-                                if (!_winner) {
-                                    _context.next = 7;
+                                if (!firstTime) {
+                                    // Find new matches from first matches.
+                                    results = getMatches(kmerObject, kmerMap);
+                                } else {
+                                    firstTime = false;
+                                    results = firstWinner;
+                                }
+                                winner = findWinner(results);
+
+                                if (!winner) {
+                                    _context.next = 8;
                                     break;
                                 }
 
-                                removeWinnerKmers(_winner.kmers);
-                                _context.next = 7;
-                                return (0, _kmers.mapToJSON)(_winner.match);
+                                removeWinnerKmers(winner.kmers);
+                                _context.next = 8;
+                                return (0, _kmers.mapToJSON)(winner.match);
 
-                            case 7:
+                            case 8:
                                 _context.next = 0;
                                 break;
 
-                            case 9:
+                            case 10:
                                 if (!(hitCounter === 0)) {
-                                    _context.next = 11;
+                                    _context.next = 12;
                                     break;
                                 }
 
                                 throw new Error('No hits were found! (kmerResults.length === 0)');
 
-                            case 11:
+                            case 12:
                             case 'end':
                                 return _context.stop();
                         }
                     }
                 }, _marked[0], this);
             }
-            kmerObject.summary = winner.summary;
-            kmerObject.firstMatches = winner.templates;
+            kmerObject.summary = firstWinner.summary;
+            kmerObject.firstMatches = firstWinner.templates;
             return loop();
         }
     }]);
@@ -1060,11 +1058,6 @@ var KmerFinderClient = exports.KmerFinderClient = function (_KmerJS) {
 },{"./kmers.js":2,"./stats":3,"_process":284,"bignumber.js":13,"console":213,"from2":27,"request":81}],2:[function(require,module,exports){
 (function (process){
 'use strict';
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.KmerJS = exports.complementMap = undefined;
 
 var _createClass = function () {
     function defineProperties(target, props) {
@@ -1100,41 +1093,7 @@ var _slicedToArray = function () {
             throw new TypeError("Invalid attempt to destructure non-iterable instance");
         }
     };
-}(); /* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
-
-exports.jsonToStrMap = jsonToStrMap;
-exports.complement = complement;
-exports.stringToMap = stringToMap;
-exports.objectToMap = objectToMap;
-exports.mapToJSON = mapToJSON;
-
-var _bignumber = require('bignumber.js');
-
-var _bignumber2 = _interopRequireDefault(_bignumber);
-
-var _bluebird = require('bluebird');
-
-var _bluebird2 = _interopRequireDefault(_bluebird);
-
-var _stream = require('stream');
-
-var _stream2 = _interopRequireDefault(_stream);
-
-var _filereaderStream = require('filereader-stream');
-
-var _filereaderStream2 = _interopRequireDefault(_filereaderStream);
-
-var _progressStream = require('progress-stream');
-
-var _progressStream2 = _interopRequireDefault(_progressStream);
-
-var _performanceNow = require('performance-now');
-
-var _performanceNow2 = _interopRequireDefault(_performanceNow);
-
-function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : { default: obj };
-}
+}();
 
 function _classCallCheck(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
@@ -1142,8 +1101,24 @@ function _classCallCheck(instance, Constructor) {
     }
 }
 
+/* eslint no-underscore-dangle: [2, { "allow": ["_id", "_transform", "_lastLineData", "_flush"] }] */
+
+var BN = require('bignumber.js');
+var Promise = require('bluebird');
+var stream = require('stream');
 var fs = require('fs');
-var complementMap = exports.complementMap = new Map([['A', 'T'], ['T', 'A'], ['G', 'C'], ['C', 'G']]);
+var fileReaderStream = require('filereader-stream');
+var progressEvent = require('progress-stream');
+var now = require('performance-now');
+
+var complementMap = {
+    'A': 'T',
+    'T': 'A',
+    'G': 'C',
+    'C': 'G'
+};
+
+var regex = /[ATGC]/g;
 
 function objToStrMap(obj) {
     var strMap = new Map();
@@ -1179,10 +1154,32 @@ function jsonToStrMap(jsonStr) {
     return objToStrMap(jsonStr);
 }
 
+// Source:
+// http://eddmann.com/posts/ten-ways-to-reverse-a-string-in-javascript/
+String.prototype.reverse = function () {
+    // let s = this;
+    // let o = '';
+    // for (var i = s.length - 1; i >= 0; i--){
+    //   o += s[i];
+    // }
+    // return o;
+    var s = this;
+    s = s.split('');
+    var len = s.length,
+        halfIndex = Math.floor(len / 2) - 1,
+        tmp;
+    for (var i = 0; i <= halfIndex; i++) {
+        tmp = s[len - i - 1];
+        s[len - i - 1] = s[i];
+        s[i] = tmp;
+    }
+    return s.join('');
+};
+
 function complement(string) {
-    return string.replace(/[ATGC]/g, function (match) {
-        return complementMap.get(match);
-    }).split('').reverse().join('');
+    return string.replace(regex, function (match) {
+        return complementMap[match];
+    }).reverse();
 }
 
 function stringToMap(string) {
@@ -1227,7 +1224,7 @@ function mapToJSON(strMap) {
     return obj;
 }
 
-var KmerJS = exports.KmerJS = function () {
+var KmerJS = function () {
     /**
      * [constructor description]
      * @param  {[type]} preffix  =             'ATGAC' [Filter kmers starting with]
@@ -1256,8 +1253,8 @@ var KmerJS = exports.KmerJS = function () {
         this.step = step;
         this.progress = progress;
         this.coverage = coverage;
-        this.evalue = new _bignumber2.default(0.05);
-        this.kmerMap = new Map(); // [Map object: {16-mer: times found in line}]
+        this.evalue = new BN(0.05);
+        this.kmerMap = Object.create(null); // {16-mer: times found in line}
         this.kmerMapSize = 0;
         this.env = env;
         if (env === 'browser') {
@@ -1280,7 +1277,8 @@ var KmerJS = exports.KmerJS = function () {
             for (var index = 0; index <= stop; index += 1) {
                 var kmer = line.substring(ini, end);
                 if (kmer.startsWith(this.preffix)) {
-                    this.kmerMap.set(kmer, (this.kmerMap.get(kmer) || 0) + 1);
+                    this.kmerMap[kmer] = (this.kmerMap[kmer] || 0) + 1;
+                    this.kmerMapSize += 1;
                 }
                 ini += this.step;
                 end = ini + this.kmerLength;
@@ -1294,14 +1292,14 @@ var KmerJS = exports.KmerJS = function () {
     }, {
         key: 'readFile',
         value: function readFile() {
-            var start = (0, _performanceNow2.default)();
+            var start = now();
             var kmerObj = this;
-            var str = (0, _progressStream2.default)({
+            var str = progressEvent({
                 time: 100 /* ms */
             });
-            var promise = new _bluebird2.default(function (resolve) {
+            var promise = new Promise(function (resolve) {
                 // Source: https://strongloop.com/strongblog/practical-examples-of-the-new-node-js-streams-api/
-                var liner = new _stream2.default.Transform({ objectMode: true });
+                var liner = new stream.Transform({ objectMode: true });
                 liner._transform = function (chunk, encoding, done) {
                     var data = chunk.toString();
                     if (this._lastLineData) {
@@ -1320,11 +1318,15 @@ var KmerJS = exports.KmerJS = function () {
                     this._lastLineData = null;
                     done();
                 };
-
+                // if (kmerObj.env === 'node'){
+                //     fs.createReadStream(kmerObj.fastq).pipe(liner);
+                // }else if (kmerObj.env === 'browser') {
+                //     fileReaderStream(kmerObj.fastq).pipe(liner);
+                // }
                 if (kmerObj.env === 'node') {
                     fs.createReadStream(kmerObj.fastq).pipe(str).pipe(liner);
                 } else if (kmerObj.env === 'browser') {
-                    (0, _filereaderStream2.default)(kmerObj.fastq).pipe(str).pipe(liner);
+                    fileReaderStream(kmerObj.fastq).pipe(str).pipe(liner);
                 }
                 var i = 0;
                 var lines = 0;
@@ -1335,10 +1337,6 @@ var KmerJS = exports.KmerJS = function () {
                     var line = void 0;
                     while (null !== (line = liner.read())) {
                         if (i === 1 && line.length > 1) {
-                            // kmerObj.kmersInLine(line, kmerObj.kmerMap,
-                            //        kmerObj.length,kmerObj.preffix, kmerObj.step);
-                            // kmerObj.kmersInLine(complement(line), kmerObj.kmerMap,
-                            //       kmerObj.length,kmerObj.preffix, kmerObj.step);
                             [line, complement(line)].forEach(function (kmerLine) {
                                 kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap, kmerObj.length, kmerObj.preffix, kmerObj.step);
                             });
@@ -1348,20 +1346,19 @@ var KmerJS = exports.KmerJS = function () {
                         i += 1;
                         lines += 1;
                         kmerObj.lines = lines;
-                        if (kmerObj.env === 'node' && kmerObj.progress) {
-                            var progress = 'Lines: ' + lines + ' / Kmers: ' + kmerObj.kmerMap.size + '\r';
+                        if (kmerObj.env === 'node' && kmerObj.progress && false) {
+                            var progress = 'L: ' + lines + ' / K: ' + kmerObj.kmerMapSize + '\r';
                             process.stdout.write(progress);
                         }
                     }
                 });
                 liner.on('end', function () {
-                    var end = (0, _performanceNow2.default)();
+                    var end = now();
                     kmerObj.kmerExtractTime = end - start;
                     // Clean up progress output
                     if (kmerObj.env === 'node' && kmerObj.progress) {
                         process.stdout.write('\n                               \n');
                     }
-                    kmerObj.kmerMapSize = kmerObj.kmerMap.size;
                     resolve(kmerObj.kmerMap);
                 });
             });
@@ -1375,30 +1372,19 @@ var KmerJS = exports.KmerJS = function () {
     return KmerJS;
 }();
 
+module.exports = {
+    KmerJS: KmerJS, // (A)
+    mapToJSON: mapToJSON
+};
+
 }).call(this,require('_process'))
 },{"_process":284,"bignumber.js":13,"bluebird":14,"filereader-stream":23,"fs":163,"performance-now":69,"progress-stream":70,"stream":315}],3:[function(require,module,exports){
 'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.etta = undefined;
-exports.zScore = zScore;
-exports.fastp = fastp;
+var BN = require('bignumber.js');
+var Console = require('console');
 
-var _bignumber = require('bignumber.js');
-
-var _bignumber2 = _interopRequireDefault(_bignumber);
-
-var _console = require('console');
-
-var _console2 = _interopRequireDefault(_console);
-
-function _interopRequireDefault(obj) {
-    return obj && obj.__esModule ? obj : { default: obj };
-}
-
-var etta = exports.etta = new _bignumber2.default(1.0e-8);
+var etta = new BN(1.0e-8);
 
 /**
 * Conservative two sided p-value from z-score
@@ -1413,25 +1399,25 @@ var etta = exports.etta = new _bignumber2.default(1.0e-8);
 
 function zScore(r1, n1, r2, n2) {
     // Console.log(r1, n1, r2, n2);
-    var p1 = new _bignumber2.default(r1).dividedBy(n1).plus(etta);
+    var p1 = new BN(r1).dividedBy(n1).plus(etta);
     // Console.log(p1);
     // let p2 = r2 / n2 + etta;
-    var p2 = new _bignumber2.default(r2).dividedBy(n2).plus(etta);
+    var p2 = new BN(r2).dividedBy(n2).plus(etta);
     // Console.log(p2);
     // let q1 = 1 - p1;
     // let q2 = 1 - p2;
     // let p = (r1 + r2) / (n1 + n2 + etta);
 
-    var p = new _bignumber2.default(r1).plus(r2).dividedBy(new _bignumber2.default(n1).plus(n2).plus(etta));
-    var q = new _bignumber2.default(1).minus(p);
+    var p = new BN(r1).plus(r2).dividedBy(new BN(n1).plus(n2).plus(etta));
+    var q = new BN(1).minus(p);
     // Console.log(p);
     // Console.log(q);
     // let square = Math.sqrt(p * q * (1 / (n1 + etta) + 1 / (n2 + etta)) + etta);
     // sqrt(p*q*(1/(n1+etta)+1/(n2+etta))+etta)
-    var square = new _bignumber2.default(new _bignumber2.default(p).times(q).times(new _bignumber2.default(1).dividedBy(new _bignumber2.default(n1).plus(etta)).plus(new _bignumber2.default(1).dividedBy(new _bignumber2.default(n2).plus(etta))))).plus(etta).sqrt();
+    var square = new BN(new BN(p).times(q).times(new BN(1).dividedBy(new BN(n1).plus(etta)).plus(new BN(1).dividedBy(new BN(n2).plus(etta))))).plus(etta).sqrt();
     // Console.log(square);
     // let z = (p1 - p2) / square;
-    var z = new _bignumber2.default(p1).minus(p2).dividedBy(square);
+    var z = new BN(p1).minus(p2).dividedBy(square);
     // Console.log(r1, n1, r2, n2, p.toNumber(), q.toNumber(), square.toNumber(), z.toNumber());
     return z;
 }
@@ -1445,66 +1431,71 @@ function fastp(z) {
     // Console.log(z, z.toNumber(), new BN(10.7016));
     // Console.log(z.comparedTo(new BN(10.7016)));
     var p = 0.0;
-    if (z.comparedTo(new _bignumber2.default(10.7016)) > 0) {
+    if (z.comparedTo(new BN(10.7016)) > 0) {
         p = 1e-26;
-    } else if (z.comparedTo(new _bignumber2.default(10.4862)) > 0) {
+    } else if (z.comparedTo(new BN(10.4862)) > 0) {
         p = 1e-25;
-    } else if (z.comparedTo(new _bignumber2.default(10.2663)) > 0) {
+    } else if (z.comparedTo(new BN(10.2663)) > 0) {
         p = 1e-24;
-    } else if (z.comparedTo(new _bignumber2.default(10.0416)) > 0) {
+    } else if (z.comparedTo(new BN(10.0416)) > 0) {
         p = 1e-23;
-    } else if (z.comparedTo(new _bignumber2.default(9.81197)) > 0) {
+    } else if (z.comparedTo(new BN(9.81197)) > 0) {
         p = 1e-22;
-    } else if (z.comparedTo(new _bignumber2.default(9.5769)) > 0) {
+    } else if (z.comparedTo(new BN(9.5769)) > 0) {
         p = 1e-21;
-    } else if (z.comparedTo(new _bignumber2.default(9.33604)) > 0) {
+    } else if (z.comparedTo(new BN(9.33604)) > 0) {
         p = 1e-20;
-    } else if (z.comparedTo(new _bignumber2.default(9.08895)) > 0) {
+    } else if (z.comparedTo(new BN(9.08895)) > 0) {
         p = 1e-19;
-    } else if (z.comparedTo(new _bignumber2.default(8.83511)) > 0) {
+    } else if (z.comparedTo(new BN(8.83511)) > 0) {
         p = 1e-18;
-    } else if (z.comparedTo(new _bignumber2.default(8.57394)) > 0) {
+    } else if (z.comparedTo(new BN(8.57394)) > 0) {
         p = 1e-17;
-    } else if (z.comparedTo(new _bignumber2.default(8.30479)) > 0) {
+    } else if (z.comparedTo(new BN(8.30479)) > 0) {
         p = 1e-16;
-    } else if (z.comparedTo(new _bignumber2.default(8.02686)) > 0) {
+    } else if (z.comparedTo(new BN(8.02686)) > 0) {
         p = 1e-15;
-    } else if (z.comparedTo(new _bignumber2.default(7.73926)) > 0) {
+    } else if (z.comparedTo(new BN(7.73926)) > 0) {
         p = 1e-14;
-    } else if (z.comparedTo(new _bignumber2.default(7.4409)) > 0) {
+    } else if (z.comparedTo(new BN(7.4409)) > 0) {
         p = 1e-13;
-    } else if (z.comparedTo(new _bignumber2.default(7.13051)) > 0) {
+    } else if (z.comparedTo(new BN(7.13051)) > 0) {
         p = 1e-12;
-    } else if (z.comparedTo(new _bignumber2.default(6.8065)) > 0) {
+    } else if (z.comparedTo(new BN(6.8065)) > 0) {
         p = 1e-11;
-    } else if (z.comparedTo(new _bignumber2.default(6.46695)) > 0) {
+    } else if (z.comparedTo(new BN(6.46695)) > 0) {
         p = 1e-10;
-    } else if (z.comparedTo(new _bignumber2.default(6.10941)) > 0) {
+    } else if (z.comparedTo(new BN(6.10941)) > 0) {
         p = 1e-9;
-    } else if (z.comparedTo(new _bignumber2.default(5.73073)) > 0) {
+    } else if (z.comparedTo(new BN(5.73073)) > 0) {
         p = 1e-8;
-    } else if (z.comparedTo(new _bignumber2.default(5.32672)) > 0) {
+    } else if (z.comparedTo(new BN(5.32672)) > 0) {
         p = 1e-7;
-    } else if (z.comparedTo(new _bignumber2.default(4.89164)) > 0) {
+    } else if (z.comparedTo(new BN(4.89164)) > 0) {
         p = 1e-6;
-    } else if (z.comparedTo(new _bignumber2.default(4.41717)) > 0) {
+    } else if (z.comparedTo(new BN(4.41717)) > 0) {
         p = 1e-5;
-    } else if (z.comparedTo(new _bignumber2.default(3.89059)) > 0) {
+    } else if (z.comparedTo(new BN(3.89059)) > 0) {
         p = 1e-4;
-    } else if (z.comparedTo(new _bignumber2.default(3.29053)) > 0) {
+    } else if (z.comparedTo(new BN(3.29053)) > 0) {
         p = 1e-3;
-    } else if (z.comparedTo(new _bignumber2.default(2.57583)) > 0) {
+    } else if (z.comparedTo(new BN(2.57583)) > 0) {
         p = 0.01;
-    } else if (z.comparedTo(new _bignumber2.default(1.95996)) > 0) {
+    } else if (z.comparedTo(new BN(1.95996)) > 0) {
         p = 0.05;
-    } else if (z.comparedTo(new _bignumber2.default(1.64485)) > 0) {
+    } else if (z.comparedTo(new BN(1.64485)) > 0) {
         p = 0.1;
     } else {
         p = 1.0;
     }
     // Console.log(p, new BN(p));
-    return new _bignumber2.default(p);
+    return new BN(p);
 }
+module.exports = {
+    etta: etta,
+    zScore: zScore,
+    fastp: fastp
+};
 
 },{"bignumber.js":13,"console":213}],4:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.

@@ -33,11 +33,23 @@ function jsonToStrMap(jsonStr) {
 // Source:
 // http://eddmann.com/posts/ten-ways-to-reverse-a-string-in-javascript/
 String.prototype.reverse = function() {
-    var i, s='';
-    for(i = this.length; i >= 0; i--) {
-        s+= this.charAt(i);
-    }
-    return s;
+    // let s = this;
+    // let o = '';
+    // for (var i = s.length - 1; i >= 0; i--){
+    //   o += s[i];
+    // }
+    // return o;
+    var s = this;
+    s = s.split('');
+      var len = s.length,
+          halfIndex = Math.floor(len / 2) - 1,
+          tmp;
+      for (var i = 0; i <= halfIndex; i++) {
+        tmp = s[len - i - 1];
+        s[len - i - 1] = s[i];
+        s[i] = tmp;
+      }
+      return s.join('');
 };
 
 function complement(string) {
@@ -144,11 +156,11 @@ class KmerJS {
                 this._lastLineData = null;
                 done();
             };
-            if (kmerObj.env === 'node'){
-                fs.createReadStream(kmerObj.fastq).pipe(liner);
-            }else if (kmerObj.env === 'browser') {
-                fileReaderStream(kmerObj.fastq).pipe(liner);
-            }
+            // if (kmerObj.env === 'node'){
+            //     fs.createReadStream(kmerObj.fastq).pipe(liner);
+            // }else if (kmerObj.env === 'browser') {
+            //     fileReaderStream(kmerObj.fastq).pipe(liner);
+            // }
             if (kmerObj.env === 'node'){
                 fs.createReadStream(kmerObj.fastq).pipe(str).pipe(liner);
             }else if (kmerObj.env === 'browser') {
@@ -163,7 +175,7 @@ class KmerJS {
                 let line;
                 while (null !== (line = liner.read())) {
                     if (i === 1 && line.length > 1) {
-                        [line, complement(line)].forEach(function (kmerLine) {
+                      [line, complement(line)].forEach(function (kmerLine) {
                             kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap,
                                 kmerObj.length,kmerObj.preffix, kmerObj.step);
                         });
@@ -173,8 +185,8 @@ class KmerJS {
                     i += 1;
                     lines += 1;
                     kmerObj.lines = lines;
-                    if (kmerObj.env === 'node' && kmerObj.progress){
-                        let progress = `Lines: ${lines} / Kmers: ${kmerObj.kmerMapSize}\r`;
+                    if (kmerObj.env === 'node' && kmerObj.progress && false){
+                        let progress = `L: ${lines} / K: ${kmerObj.kmerMapSize}\r`;
                         process.stdout.write(progress);
                     }
                 }
