@@ -156,16 +156,16 @@ class KmerJS {
                 this._lastLineData = null;
                 done();
             };
-            if (kmerObj.env === 'node'){
-                fs.createReadStream(kmerObj.fastq).pipe(liner);
-            }else if (kmerObj.env === 'browser') {
-                fileReaderStream(kmerObj.fastq).pipe(liner);
-            }
             // if (kmerObj.env === 'node'){
-            //     fs.createReadStream(kmerObj.fastq).pipe(str).pipe(liner);
+            //     fs.createReadStream(kmerObj.fastq).pipe(liner);
             // }else if (kmerObj.env === 'browser') {
-            //     fileReaderStream(kmerObj.fastq).pipe(str).pipe(liner);
+            //     fileReaderStream(kmerObj.fastq).pipe(liner);
             // }
+            if (kmerObj.env === 'node'){
+                fs.createReadStream(kmerObj.fastq).pipe(str).pipe(liner);
+            }else if (kmerObj.env === 'browser') {
+                fileReaderStream(kmerObj.fastq).pipe(str).pipe(liner);
+            }
             let i = 0;
             let lines = 0;
             kmerObj.lines = 0;

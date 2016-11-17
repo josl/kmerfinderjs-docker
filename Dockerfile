@@ -1,5 +1,5 @@
 # Set base image to NodeJS
-FROM node:6.8.0
+FROM node:6.9.1
 # File Author / Maintainer
 MAINTAINER Jose Luis Bellod Cisneros
 
