@@ -112,7 +112,7 @@ app.post('/kmers', textParser, function (req, res) {
             // kmerMap.delete('db');
             // kmerMap.delete('collection');
             // console.log('kmer Size received ', kmerMap.size);
-            kmerObj.kmerMapSize = Object.keys(test).length
+            kmerObj.kmerMapSize = Object.keys(kmerMap).length
             // kmerObj.kmerMapSize = kmerMap.size;
             kmerObj.findFirstMatch(kmerMap)
                 .then(function (matches) {
