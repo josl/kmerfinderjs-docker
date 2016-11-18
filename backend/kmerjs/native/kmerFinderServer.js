@@ -45,42 +45,53 @@ let kmerMapSchema = new Schema({
 
 
 function findKmersMatchesRedis(kmerMap, client, start) {
-    let kmerQuery = Object.keys(kmerMap);
+    // let kmerQuery = Object.keys(kmerMap);
+    let kmerQuery = [];
+    let promises = [];
     let templates = Object.create(null);;
     let nHits = 0;
-
+    console.log('we begin!');
+    // start a separate batch command queue
+    for (var kmer in kmerMap) {
+        if (kmerMap.hasOwnProperty(kmer)) {
+            promises.push(['lrange', kmer, 0, -1]);
+            kmerQuery.push(kmer);
+        }
+    }
+    // console.log(kmerQuery);
+    // console.log(promises);
+    // kmerQuery.forEach(function (kmer) {
+    //     promises.push(['lrange', kmer, 0, -1]);
+    // });
     function updateMatches(matchTemplates, index) {
-        let kmer = kmerQuery[index];
+        let kmerString = kmerQuery[index];
         nHits += matchTemplates.length;
-        let kmerCoverage = kmerMap[kmer];
+        let kmerCoverage = kmerMap[kmerString];
         matchTemplates.forEach(function (template) {
             template = JSON.parse(template);
             let sequence = templates[template.sequence];
             if (sequence !== undefined) {
                 sequence.tScore += kmerCoverage;
                 sequence.uScore += 1;
-                if (! (kmer in sequence.kmers)){
-                    sequence.kmers[kmer] = 1;
+                if (! (kmerString in sequence.kmers)){
+                    sequence.kmers[kmerString] = 1;
                 }
             } else {
+                // let kmerInitMap = {kmerString : 1};
                 templates[template.sequence] = {
                     tScore: kmerCoverage,
                     uScore: 1,
                     lengths: template.lengths,
-                    ulength: template.ulenght,
+                    ulength: template.ulenght || template.ulength || template.ulengths,
                     // ulength: template.ulengths,
                     species: template.species,
-                    kmers: {kmer : 1}
+                    kmers: {}
                 };
+                console.log(kmerString);
+                templates[template.sequence].kmers[kmerString] = 1;
             }
         });
     }
-
-    let promises = [];
-    // start a separate batch command queue
-    kmerQuery.forEach(function (kmer) {
-        promises.push(['lrange', kmer, 0, -1]);
-    });
     return client.batch(promises)
         .execAsync()
         .then(function (results) {
@@ -514,8 +525,8 @@ class KmerFinderServer extends KmerJS {
             //     url: 'redis://127.0.0.1:6379'
             // });
             this.redis = redis.createClient({
-                host: url.substring(8, 14),
-                port: +url.substring(14, 28),
+                host: url.substring(8, 22),
+                port: +url.substring(23, 28),
                 url: url
             });
             this.redis.on('error', function (err) {
