@@ -71,6 +71,7 @@ app.post('/kmers', textParser, function (req, res) {
                 .then(function (matches) {
                     console.log('we found hits!', matches.hits);
                     console.log('sending stuff to the client!');
+                    matches.summary = kmerObj.summary;
                     res.json(matches);
                 })
                 .catch(function (err) {
