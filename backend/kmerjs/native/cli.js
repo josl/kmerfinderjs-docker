@@ -30,6 +30,8 @@ cli.main(function (args, options) {
     if (options.program === 'findKmers') {
         let kmers = kmerjs.findKmers();
         kmers.then(function () {
+            // console.log(Object.keys(kmerjs.kmerMap).length, kmerjs.lines);
+            process.stdout.write(JSON.stringify(Object.keys(kmerjs.kmerMap)));
             process.exit();
         });
     }else if (options.program === 'findMatches') {

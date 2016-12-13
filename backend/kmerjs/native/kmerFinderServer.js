@@ -50,15 +50,12 @@ function findKmersMatchesRedis(kmerMap, client, start) {
     let promises = [];
     let templates = Object.create(null);;
     let nHits = 0;
-    console.log('we begin!');
     // start a separate batch command queue
     for (var kmer in kmerMap) {
-        if (kmerMap.hasOwnProperty(kmer)) {
-            promises.push(['lrange', kmer, 0, -1]);
-            kmerQuery.push(kmer);
-        }
+        promises.push(['lrange', kmer, 0, -1]);
+        kmerQuery.push(kmer);
     }
-    // console.log(kmerQuery);
+    console.log(kmerQuery.length);
     // console.log(promises);
     // kmerQuery.forEach(function (kmer) {
     //     promises.push(['lrange', kmer, 0, -1]);
@@ -87,7 +84,7 @@ function findKmersMatchesRedis(kmerMap, client, start) {
                     species: template.species,
                     kmers: {}
                 };
-                console.log(kmerString);
+                // console.log(kmerString);
                 templates[template.sequence].kmers[kmerString] = 1;
             }
         });
@@ -102,6 +99,7 @@ function findKmersMatchesRedis(kmerMap, client, start) {
                 throw new Error('No hits were found!');
             }
             let end = now();
+            console.log(nHits);
             return {
                 templates: templates,
                 hits: nHits,
@@ -317,17 +315,17 @@ function sortKmerMatches(a, b) {
 
 function firstMatch(kmerObject, kmerMap) {
     let start = now();
-    // kmerObject.redis.select(3);
-    kmerObject.redis.select(1);
+    kmerObject.redis.select(4);
+    // kmerObject.redis.select(1);
     return kmerObject.redis
         .hgetallAsync('Summary')
         .then(function (summary) {
-            // kmerObject.redis.select(2);
-            kmerObject.redis.select(0);
+            kmerObject.redis.select(3);
+            // kmerObject.redis.select(0);
             kmerObject.summary = {
-                templates: +summary.templates,
-                totalLen: +summary.totalLen,
-                uniqueLens: +summary.uniqueLens
+                templates: +summary.Ntemplates,
+                totalLen: +summary.template_tot_len,
+                uniqueLens: +summary.template_tot_ulen
             };
             return findKmersMatchesRedis(kmerMap, kmerObject.redis, start);
         });
@@ -419,6 +417,7 @@ function winnerScoring(kmerObject, kmerMap) {
                             template.nKmers += 1;
                         }
                     } else {
+                        // console.log('first time!');
                         templates[sequence] = {
                             tScore: kmerCoverage,
                             uScore: 1,
@@ -432,6 +431,7 @@ function winnerScoring(kmerObject, kmerMap) {
                     }
                 }
             }
+            // console.log(template);
             if (template !== undefined) {
                 nHits += template.nKmers;
             } else {
