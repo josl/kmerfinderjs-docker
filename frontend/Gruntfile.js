@@ -485,7 +485,7 @@ module.exports = function (grunt) {
           constants: {
               API: {
                   status: 'prod',
-                  url: 'http://compare.cbs.dtu.dk:5000/',
+                  url: 'http://compare.cbs.dtu.dk:445/',
               },
           }
       },
