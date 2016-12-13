@@ -8,9 +8,11 @@ var bodyParser = require('body-parser');
 var app = express();
 
 var app = require('express')();
-var server = require('http').Server(app);
+//var server = require('http').Server(app);
+const https = require('https');
 var io = require('socket.io')(server);
 var helmet = require('helmet');
+
 app.use(helmet());
 
 app.use(function (req, res, next) {
@@ -25,6 +27,13 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 // parse application/json
 app.use(bodyParser.json());
+
+const options = {
+  key: fs.readFileSync('/usr/src/certs/private.key'),
+  cert: fs.readFileSync('/usr/src/certs/cert.crt')
+};
+
+https.createServer(options, app).listen(443);
 
 server.listen(80, function () {
     console.log('Ready');
