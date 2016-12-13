@@ -6,12 +6,12 @@ const kmerJS = require('./kmerjs/native/kmers.js');
 const Console = require('console');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const app = require('express')();
+const app = express();
 const server = require('http').Server(app);
 const https = require('https');
 const helmet = require('helmet');
 
-const app = express();
+
 
 app.use(helmet());
 
