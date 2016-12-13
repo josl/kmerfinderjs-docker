@@ -174,6 +174,7 @@ class KmerJS {
             liner.on('readable', function () {
                 let line;
                 while (null !== (line = liner.read())) {
+                    kmerObj.lines  += 1;
                     if (i === 1 && line.length > 1) {
                       [line, complement(line)].forEach(function (kmerLine) {
                             kmerObj.kmersInLine(kmerLine, kmerObj.kmerMap,
@@ -183,8 +184,6 @@ class KmerJS {
                         i = -1;
                     }
                     i += 1;
-                    lines += 1;
-                    kmerObj.lines = lines;
                     if (kmerObj.env === 'node' && kmerObj.progress && false){
                         let progress = `L: ${lines} / K: ${kmerObj.kmerMapSize}\r`;
                         process.stdout.write(progress);
