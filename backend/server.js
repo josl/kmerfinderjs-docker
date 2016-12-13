@@ -8,9 +8,9 @@ var bodyParser = require('body-parser');
 var app = express();
 
 var app = require('express')();
-//var server = require('http').Server(app);
+var server = require('http').Server(app);
 const https = require('https');
-var io = require('socket.io')(server);
+// var io = require('socket.io')(server);
 var helmet = require('helmet');
 
 app.use(helmet());
@@ -47,44 +47,6 @@ app.get('/', function (req, res) {
     res.send('Hello World!');
 });
 
-function waitForMatches(matches, kmerObj, socket){
-    matches.event
-        .on('winner', function (winner) {
-            console.log('New inner');
-            socket.emit('newMatch', kmerJS.mapToJSON(winner));
-        });
-
-    matches.promise
-        .then(function () {
-            kmerObj.close();
-            socket.emit('lastMatch');
-        })
-        .catch(function (err) {
-            kmerObj.close();
-            console.log('Server: ', err.message);
-            socket.emit('error', { error: err.message});
-        });
-}
-
-io.on('connection', function (socket) {
-    socket.on('kmerQuery', function (kmerQuery) {
-        var query = kmerJS.jsonToStrMap(kmerQuery);
-        console.log(query.get('db'), query.get('collection'));
-        var kmerObj = new kmerFinder.KmerFinderServer(
-            '',
-            'ATGAC', 16, 1, 1, true, 'mongo',
-            'mongodb://mongo:' + process.env.PORT + '/' +query.get('db'),
-            query.get('collection'), 'winner'
-        );
-        query.delete('db');
-        query.delete('collection');
-        var matches = kmerObj.findMatches(query);
-        console.log('sending confirmation!');
-        socket.emit('queryReceived');
-        waitForMatches(matches, kmerObj, socket);
-    });
-});
-
 app.post('/kmers', textParser, function (req, res) {
     if (!req.body) {
         return res.sendStatus(400);
@@ -97,62 +59,17 @@ app.post('/kmers', textParser, function (req, res) {
         })
         .on('end', function () {
             var jsonMatches = [];
-            // var kmerMap = kmers;
-            // console.log(kmerMap, kmers);
-            // console.log(kmerMap['db'], kmerMap['collection']);
             var kmerObj = new kmerFinder(
-            // var kmerObj = new kmerFinder.KmerFinderServer(
                 '',
                 'ATGAC', 16, 1, 1, false, 'mongo',
                 'redis://redis:' + process.env.PORT,
-                // 'mongodb://mongo:' + process.env.PORT + '/' + kmerMap.get('db'),
               kmers['collection'], 'winner'
             );
-            // var kmerMap = kmerJS.stringToMap(kmers);
-            // console.log(kmerMap.get('db'), kmerMap.get('collection'));
-            // var kmerObj = new kmerFinder.KmerFinderServer(
-            //     '',
-            //     'ATGAC', 16, 1, 1, false, 'mongo',
-            //     'redis://redis:' + process.env.PORT,
-            //     // 'mongodb://mongo:' + process.env.PORT + '/' + kmerMap.get('db'),
-            //     kmerMap.get('collection'), 'winner'
-            // );
-            // console.log('deleting...', kmers.db);
-            // delete kmers.db;
-            // delete kmers.collection;
-            // console.log('after deleting...', kmers.db);
-            // delete kmers['db'];
-            // delete kmers['collection'];
-            // kmerMap.delete('db');
-            // kmerMap.delete('collection');
-            // console.log('kmer Size received ', kmerMap.size);
             var kmerMap = JSON.parse(kmers);
             kmerObj.kmerMapSize = Object.keys(kmerMap).length;
-            // kmerObj.kmerMapSize = kmerMap.size;
             kmerObj.findFirstMatch(kmerMap)
                 .then(function (matches) {
                     console.log('we found hits!', matches.hits);
-
-                    // matches.templates = Object.keys(matches.templates)
-                    //               .map(function (key) {
-                    //                   matches.templates[key].kmers = Object.keys(matches.templates[key].kmers);
-                    //                   //  console.log('lala', key, matches.templates[key]);
-                    //                   return [key, matches.templates[key]];
-                    //               });
-                //   matches.templates.forEach(function (hit, sequence) {
-                //       hit.kmers = Array.from(hit.kmers);
-                //       // hit.kmers = new Array(hit.kmers.values());
-                //   });
-                    // matches.templates.forEach(function (hit, sequence) {
-                    //     hit.kmers = Array.from(hit.kmers);
-                    //     // hit.kmers = new Array(hit.kmers.values());
-                    // });
-                    matches.summary = kmerObj.summary;
-                    // matches.templates = kmerJS.mapToJSON(matches.templates);
-                    // kmerObj.close();
-                    // matches.forEach(function (match) {
-                    //     jsonMatches.push(kmerJS.mapToJSON(match));
-                    // });
                     console.log('sending stuff to the client!');
                     res.json(matches);
                 })
