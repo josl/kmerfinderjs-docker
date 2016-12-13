@@ -1,0 +1,34 @@
+angular:
+  image: httpd
+  ports:
+    - "9999:443"
+  links:
+    - node
+  volumes:
+    - /etc/ssl/private/servercerts/STAR_cbs_dtu_dk.crt:/usr/local/apache2/conf/server.crt
+    - /etc/ssl/private/servercerts/STAR_cbs_dtu_dk-private.nopass.key:/usr/local/apache2/conf/server.key
+    - /etc/ssl/private/servercerts/STAR_cbs_dtu_dk.ca-bundle:/usr/local/apache2/conf/STAR_cbs_dtu_dk.ca-bundle
+    - $PWD/apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    - $PWD/apache/httpd-ssl.conf:/usr/local/apache2/conf/extra/httpd-ssl.conf
+    - ./frontend/dist:/usr/local/apache2/htdocs/
+node:
+    build: .
+    command: "npm start"
+    ports:
+        - "445:443"
+    links:
+        - redis
+    environment:
+        PORT: 6379
+    volumes:
+        - $PWD/database:/usr/data
+        - /etc/ssl/private/servercerts/STAR_cbs_dtu_dk-private.nopass.key:/usr/src/certs/private.key
+        - /etc/ssl/private/servercerts/STAR_cbs_dtu_dk.crt:/usr/src/certs/cert.crt
+redis:
+    image: redis:latest
+    command: "redis-server --appendonly yes"
+    volumes:
+        - $PWD/database/redis:/data
+        - $PWD/database:/usr/data
+    ports:
+        - "6379:6379"

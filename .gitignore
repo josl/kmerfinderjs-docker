@@ -9,3 +9,5 @@ database/*
 /frontend/app/scripts/config.js
 docker-compose-prod.yml
 appendonly.aof
+apache
+test_data
