@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 
-var express = require('express');
-var kmerFinder = require('./kmerjs/native/kmerFinderServer.js');
-var kmerJS = require('./kmerjs/native/kmers.js');
-var Console = require('console');
-var bodyParser = require('body-parser');
-var app = express();
-
-var app = require('express')();
-var server = require('http').Server(app);
+const express = require('express');
+const kmerFinder = require('./kmerjs/native/kmerFinderServer.js');
+const kmerJS = require('./kmerjs/native/kmers.js');
+const Console = require('console');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const app = require('express')();
+const server = require('http').Server(app);
 const https = require('https');
-// var io = require('socket.io')(server);
-var helmet = require('helmet');
+const helmet = require('helmet');
+
+const app = express();
 
 app.use(helmet());
 
