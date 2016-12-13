@@ -10,7 +10,7 @@ node:
     build: .
     command: "npm start"
     ports:
-        - "5000:80"
+        - "445:80"
     links:
         - redis
     environment:
